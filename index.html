@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nagpur Metro Route Planner</title>
+    <style>
+        :root {
+            --primary: #FF7A00;
+            --primary-dark: #cc6200;
+            --bg: #f4f4f9;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --text-light: #666666;
+            --border: #e0e0e0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        select,
+        input[type="time"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        #results {
+            margin-top: 30px;
+        }
+
+        .itinerary {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .itinerary-header {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .step {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .step.transfer {
+            color: var(--text-light);
+            font-size: 0.9em;
+            margin: 10px 0;
+            padding-left: 10px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .error {
+            color: #d32f2f;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/material_orange.css">
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Nagpur Metro Planner</h1>
+
+        <div class="form-group">
+            <label for="origin">From Station</label>
+            <select id="origin"></select>
+        </div>
+
+        <div class="form-group">
+            <label for="destination">To Station</label>
+            <select id="destination"></select>
+        </div>
+
+        <div class="form-group">
+            <label for="time">Departure Time</label>
+            <input type="text" id="time" value="08:00">
+        </div>
+
+        <button onclick="calculateRoutes()">Find Next Trains</button>
+
+        <div id="results"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        let metroData = null;
+
+        // Utilities
+        function timeToSeconds(timeStr) {
+            const parts = timeStr.split(':');
+            return (+parts[0]) * 3600 + (+parts[1]) * 60 + (parts[2] ? (+parts[2]) : 0);
+        }
+
+        function secondsToTime(secs) {
+            const h = Math.floor(secs / 3600).toString().padStart(2, '0');
+            const m = Math.floor((secs % 3600) / 60).toString().padStart(2, '0');
+            return `${h}:${m}`;
+        }
+
+        // Populate Dropdowns
+        function initDropdowns() {
+            const stationsSet = new Set();
+            metroData.lines.forEach(line => {
+                line.directions[0].stations.forEach(s => stationsSet.add(s));
+            });
+
+            const stations = Array.from(stationsSet).sort();
+            const originSelect = document.getElementById('origin');
+            const destSelect = document.getElementById('destination');
+
+            stations.forEach(station => {
+                originSelect.add(new Option(station, station));
+                destSelect.add(new Option(station, station));
+            });
+
+            // Set default destinations
+            originSelect.value = "Automotive sq";
+            destSelect.value = "Lokmanya";
+        }
+
+        // Find Line and Direction for a given journey
+        function findRouteSegment(from, to) {
+            for (let line of metroData.lines) {
+                for (let dir of line.directions) {
+                    const fromIdx = dir.stations.indexOf(from);
+                    const toIdx = dir.stations.indexOf(to);
+                    if (fromIdx !== -1 && toIdx !== -1 && fromIdx < toIdx) {
+                        return { line: line.line_name, dir: dir, fromIdx, toIdx };
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Get the next N trips for a specific segment starting after a given time
+        function getNextTrips(segment, startTimeSecs, count = 4) {
+            const trips = [];
+            const fromOffset = segment.dir.travel_time_offsets_seconds[segment.fromIdx];
+            const toOffset = segment.dir.travel_time_offsets_seconds[segment.toIdx];
+
+            for (let depStr of segment.dir.departures) {
+                const trainStartSecs = timeToSeconds(depStr);
+                const depAtStation = trainStartSecs + fromOffset;
+
+                if (depAtStation >= startTimeSecs) {
+                    trips.push({
+                        departure: depAtStation,
+                        arrival: trainStartSecs + toOffset
+                    });
+                    if (trips.length >= count) break;
+                }
+            }
+            return trips;
+        }
+
+        // Main Calculation
+        function calculateRoutes() {
+            const origin = document.getElementById('origin').value;
+            const destination = document.getElementById('destination').value;
+            const timeInput = document.getElementById('time').value;
+            const resultsDiv = document.getElementById('results');
+
+            resultsDiv.innerHTML = '';
+
+            if (origin === destination) {
+                resultsDiv.innerHTML = '<p class="error">Origin and destination cannot be the same.</p>';
+                return;
+            }
+
+            const startTimeSecs = timeToSeconds(timeInput);
+
+            // Check if direct route exists
+            const directSegment = findRouteSegment(origin, destination);
+
+            if (directSegment) {
+                // Direct Route
+                const trips = getNextTrips(directSegment, startTimeSecs, 4);
+                if (trips.length === 0) {
+                    resultsDiv.innerHTML = '<p class="error">No more trains available today.</p>';
+                    return;
+                }
+
+                trips.forEach((trip, idx) => {
+                    resultsDiv.innerHTML += `
+                <div class="itinerary">
+                    <div class="itinerary-header">Option ${idx + 1} (Direct)</div>
+                    <div class="step">
+                        <span><strong>Depart ${origin}:</strong></span>
+                        <span>${secondsToTime(trip.departure)}</span>
+                    </div>
+                    <div class="step">
+                        <span><strong>Arrive ${destination}:</strong></span>
+                        <span>${secondsToTime(trip.arrival)}</span>
+                    </div>
+                </div>
+            `;
+                });
+            } else {
+                // Interchange Route (via Sitabuldi)
+                const interchange = "Sitabuldi";
+                if (origin === interchange || destination === interchange) {
+                    resultsDiv.innerHTML = '<p class="error">Invalid route configuration.</p>';
+                    return;
+                }
+
+                const leg1 = findRouteSegment(origin, interchange);
+                const leg2 = findRouteSegment(interchange, destination);
+
+                if (!leg1 || !leg2) {
+                    resultsDiv.innerHTML = '<p class="error">Route not found.</p>';
+                    return;
+                }
+
+                const leg1Trips = getNextTrips(leg1, startTimeSecs, 4);
+
+                if (leg1Trips.length === 0) {
+                    resultsDiv.innerHTML = '<p class="error">No more initial trains available today.</p>';
+                    return;
+                }
+
+                let html = '';
+                leg1Trips.forEach((trip1, idx) => {
+                    // Apply 5 minute (300 seconds) transfer penalty
+                    const earliestTransferTime = trip1.arrival + 300;
+                    const leg2Trips = getNextTrips(leg2, earliestTransferTime, 1);
+
+                    if (leg2Trips.length > 0) {
+                        const trip2 = leg2Trips[0];
+                        html += `
+                    <div class="itinerary">
+                        <div class="itinerary-header">Option ${idx + 1} (1 Interchange)</div>
+                        <div class="step">
+                            <span><strong>Depart ${origin}:</strong></span>
+                            <span>${secondsToTime(trip1.departure)}</span>
+                        </div>
+                        <div class="step transfer">
+                            Arrive at Sitabuldi at ${secondsToTime(trip1.arrival)}<br>
+                            <em>Wait & Transfer (Min 5 mins)</em><br>
+                            Catch connecting train at ${secondsToTime(trip2.departure)}
+                        </div>
+                        <div class="step">
+                            <span><strong>Arrive ${destination}:</strong></span>
+                            <span>${secondsToTime(trip2.arrival)}</span>
+                        </div>
+                    </div>
+                `;
+                    } else {
+                        html += `
+                    <div class="itinerary">
+                        <div class="itinerary-header">Option ${idx + 1}</div>
+                        <div class="step error">Missed last connecting train for the day.</div>
+                    </div>
+                `;
+                    }
+                });
+                resultsDiv.innerHTML = html;
+            }
+        }
+
+        // Initialize
+        flatpickr("#time", {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            altInput: true,
+            altFormat: "h:i K",
+            time_24hr: false
+        });
+
+        fetch('routes.json')
+            .then(response => response.json())
+            .then(data => {
+                metroData = data;
+                initDropdowns();
+            })
+            .catch(error => {
+                console.error('Error loading routes.json:', error);
+                document.getElementById('results').innerHTML = '<p class="error">Error loading route data.</p>';
+            });
+    </script>
+
+</body>
+
+</html>
