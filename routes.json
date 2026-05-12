@@ -14,10 +14,10 @@
       "directions": [
         {
           "direction_id": "UP",
-          "origin": "Automotive sq",
+          "origin": "Automotive Square",
           "destination": "Khapri",
           "stations": [
-            "Automotive sq", "Nari Road", "Indora Chk", "Kadvi Chk", "Gaddi Godam Sq", 
+            "Automotive Square", "Nari Road", "Indora Chk", "Kadbi Square", "Gaddi Godam Sq", 
             "Kasturchand Park", "Zero Mile", "Sitabuldi", "Congress Nagar", "Rahate Colony", 
             "Ajni Square", "Chhatrapati Sq", "Jaiprakash Nagar", "Ujjwal Nagar", "Airport", 
             "Airport South", "New Airport", "Khapri"
@@ -43,12 +43,12 @@
         {
           "direction_id": "DN",
           "origin": "Khapri",
-          "destination": "Automotive sq",
+          "destination": "Automotive Square",
           "stations": [
             "Khapri", "New Airport", "Airport South", "Airport", "Ujjwal Nagar", 
             "Jaiprakash Nagar", "Chhatrapati Sq", "Ajni Square", "Rahate Colony", "Congress Nagar", 
-            "Sitabuldi", "Zero Mile", "Kasturchand Park", "Gaddi Godam Sq", "Kadvi Chk", 
-            "Indora Chk", "Nari Road", "Automotive sq"
+            "Sitabuldi", "Zero Mile", "Kasturchand Park", "Gaddi Godam Sq", "Kadbi Square", 
+            "Indora Chk", "Nari Road", "Automotive Square"
           ],
           "travel_time_offsets_seconds": [
             0, 190, 326, 437, 559, 657, 750, 863, 978, 1131, 1335, 1441, 1548, 1657, 1811, 1927, 2077, 2252
@@ -76,12 +76,12 @@
         {
           "direction_id": "UP",
           "origin": "Prajapati nagar",
-          "destination": "Lokmanya",
+          "destination": "Lokmanya Nagar",
           "stations": [
             "Prajapati nagar", "Vaisnodevi chk", "Ambedkar chk", "Telephone Exchng", "Chitroli chk", 
             "Agrasen chk", "Dosar Vaisya Chk", "Nagpur Railway stn", "Cotton Market", "Sitabuldi", 
-            "Jhansi Rani Sq", "Institution of Engineers", "Shanker Nagar", "LAD Square", "Ambazari Lake view", 
-            "Subhash Nagar", "Rachna Ring Road", "Vasudev Nagar", "Bansi Nagar", "Lokmanya"
+            "Jhansi Rani Sq", "Institution of Engineers", "Shanker Nagar", "LAD Square", "Dharampeth College Ambazari", 
+            "Subhash Nagar", "Rachna Ring Road", "Vasudev Nagar", "Bansi Nagar", "Lokmanya Nagar"
           ],
           "travel_time_offsets_seconds": [
             0, 188, 274, 394, 496, 601, 704, 808, 903, 1053, 1141, 1244, 1351, 1453, 1597, 1711, 1837, 1958, 2079, 2210
@@ -103,11 +103,11 @@
         },
         {
           "direction_id": "DN",
-          "origin": "Lokmanya",
+          "origin": "Lokmanya Nagar",
           "destination": "Prajapati nagar",
           "stations": [
-            "Lokmanya", "Bansi Nagar", "Vasudev Nagar", "Rachna Ring Road", "Subhash Nagar", 
-            "Ambazari Lake view", "LAD Square", "Shanker Nagar", "Institution of Engineers", "Jhansi Rani Sq", 
+            "Lokmanya Nagar", "Bansi Nagar", "Vasudev Nagar", "Rachna Ring Road", "Subhash Nagar", 
+            "Dharampeth College Ambazari", "LAD Square", "Shanker Nagar", "Institution of Engineers", "Jhansi Rani Sq", 
             "Sitabuldi", "Cotton Market", "Nagpur Railway stn", "Dosar Vaisya Chk", "Agrasen chk", 
             "Chitroli chk", "Telephone Exchng", "Ambedkar chk", "Vaisnodevi chk", "Prajapati nagar"
           ],
