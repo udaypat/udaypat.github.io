@@ -137,7 +137,7 @@
 
         <div class="form-group">
             <label for="time">Departure Time</label>
-            <input type="text" id="time" value="08:00">
+            <input type="text" id="time">
         </div>
 
         <button onclick="calculateRoutes()">Find Next Trains</button>
@@ -284,8 +284,8 @@
 
                 let html = '';
                 leg1Trips.forEach((trip1, idx) => {
-                    // Apply 5 minute (300 seconds) transfer penalty
-                    const earliestTransferTime = trip1.arrival + 300;
+                    // Apply 2 minute (120 seconds) transfer penalty
+                    const earliestTransferTime = trip1.arrival + 120;
                     const leg2Trips = getNextTrips(leg2, earliestTransferTime, 1);
 
                     if (leg2Trips.length > 0) {
@@ -299,7 +299,7 @@
                         </div>
                         <div class="step transfer">
                             Arrive at Sitabuldi at ${secondsToTime(trip1.arrival)}<br>
-                            <em>Wait & Transfer (Min 5 mins)</em><br>
+                            <em>Wait & Transfer (Min 2 mins)</em><br>
                             Catch connecting train at ${secondsToTime(trip2.departure)}
                         </div>
                         <div class="step">
@@ -328,7 +328,8 @@
             dateFormat: "H:i",
             altInput: true,
             altFormat: "h:i K",
-            time_24hr: false
+            time_24hr: false,
+            defaultDate: new Date()
         });
 
         fetch('routes.json')
