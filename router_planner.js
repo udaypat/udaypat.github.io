@@ -82,7 +82,11 @@ function calculateRoutes() {
     resultsDiv.innerHTML = '';
 
     if (origin === destination) {
-        resultsDiv.innerHTML = '<p class="error">Origin and destination cannot be the same.</p>';
+        resultsDiv.innerHTML = `
+            <div class="alert alert-warning d-flex align-items-center" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
+                <div>Origin and destination cannot be the same.</div>
+            </div>`;
         return;
     }
 
@@ -101,30 +105,60 @@ function calculateRoutes() {
         }
 
         if (trips.length === 0) {
-            resultsDiv.innerHTML = '<p class="error">No routes available for the selected time.</p>';
+            resultsDiv.innerHTML = `
+                <div class="alert alert-warning d-flex align-items-center" role="alert">
+                    <i class="bi bi-info-circle-fill me-2 flex-shrink-0"></i>
+                    <div>No routes available for the selected time.</div>
+                </div>`;
             return;
         }
 
+        let html = '<h5 class="fw-bold mb-4 text-secondary"><i class="bi bi-list-task me-2"></i>Route Options</h5>';
+        const isAqua = directSegment.line.toLowerCase().includes('aqua');
+        const dotClass = isAqua ? 'timeline-dot aqua' : 'timeline-dot';
+
         trips.forEach((trip, idx) => {
-            resultsDiv.innerHTML += `
-                <div class="itinerary">
-                    <div class="itinerary-header">Option ${idx + 1} (Direct)</div>
-                    <div class="step">
-                        <span><strong>Depart ${origin}:</strong></span>
-                        <span>${secondsToTime(trip.departure)}</span>
+            html += `
+                <div class="card card-custom mb-4 border-0">
+                    <div class="card-header bg-white border-0 pt-3 pb-0">
+                        <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} <span class="badge bg-light text-secondary ms-2 fw-normal border">Direct</span></h6>
                     </div>
-                    <div class="step">
-                        <span><strong>Arrive ${destination}:</strong></span>
-                        <span>${secondsToTime(trip.arrival)}</span>
+                    <div class="card-body pt-3">
+                        <div class="timeline-container">
+                            <div class="timeline-line"></div>
+                            
+                            <div class="timeline-step">
+                                <div class="${dotClass}"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-time fs-5">${secondsToTime(trip.departure)}</div>
+                                    <div class="timeline-station fw-bold">${origin}</div>
+                                    <div class="text-muted small mt-1">Board ${directSegment.line}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="timeline-step">
+                                <div class="${dotClass}"></div>
+                                <div class="timeline-content">
+                                    <div class="timeline-time fs-5">${secondsToTime(trip.arrival)}</div>
+                                    <div class="timeline-station fw-bold">${destination}</div>
+                                    <div class="text-muted small mt-1">Destination</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
         });
+        resultsDiv.innerHTML = html;
     } else {
         // Interchange Route (via Sitabuldi)
         const interchange = "Sitabuldi";
         if (origin === interchange || destination === interchange) {
-            resultsDiv.innerHTML = '<p class="error">Invalid route configuration.</p>';
+            resultsDiv.innerHTML = `
+                <div class="alert alert-danger d-flex align-items-center" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
+                    <div>Invalid route configuration.</div>
+                </div>`;
             return;
         }
 
@@ -132,17 +166,25 @@ function calculateRoutes() {
         const leg2 = findRouteSegment(interchange, destination);
 
         if (!leg1 || !leg2) {
-            resultsDiv.innerHTML = '<p class="error">Route not found.</p>';
+            resultsDiv.innerHTML = `
+                <div class="alert alert-danger d-flex align-items-center" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
+                    <div>Route not found.</div>
+                </div>`;
             return;
         }
 
-        let html = '';
+        let html = '<h5 class="fw-bold mb-4 text-secondary"><i class="bi bi-list-task me-2"></i>Route Options</h5>';
 
         if (timeMode === 'depart') {
             const leg1Trips = getNextTrips(leg1, targetTimeSecs, MAX_ROUTE_OPTIONS);
 
             if (leg1Trips.length === 0) {
-                resultsDiv.innerHTML = '<p class="error">No more initial trains available today.</p>';
+                resultsDiv.innerHTML = `
+                    <div class="alert alert-warning d-flex align-items-center" role="alert">
+                        <i class="bi bi-info-circle-fill me-2 flex-shrink-0"></i>
+                        <div>No more initial trains available today.</div>
+                    </div>`;
                 return;
             }
 
@@ -153,29 +195,60 @@ function calculateRoutes() {
 
                 if (leg2Trips.length > 0) {
                     const trip2 = leg2Trips[0];
+                    const isAqua1 = leg1.line.toLowerCase().includes('aqua');
+                    const dotClass1 = isAqua1 ? 'timeline-dot aqua' : 'timeline-dot';
+                    const isAqua2 = leg2.line.toLowerCase().includes('aqua');
+                    const dotClass2 = isAqua2 ? 'timeline-dot aqua' : 'timeline-dot';
+
                     html += `
-                        <div class="itinerary">
-                            <div class="itinerary-header">Option ${idx + 1} (1 Interchange)</div>
-                            <div class="step">
-                                <span><strong>Depart ${origin}:</strong></span>
-                                <span>${secondsToTime(trip1.departure)}</span>
+                        <div class="card card-custom mb-4 border-0">
+                            <div class="card-header bg-white border-0 pt-3 pb-0">
+                                <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} <span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span></h6>
                             </div>
-                            <div class="step transfer">
-                                Arrive at Sitabuldi at ${secondsToTime(trip1.arrival)}<br>
-                                <em>Transfer 2 mins</em><br>
-                                Catch connecting train at ${secondsToTime(trip2.departure)}
-                            </div>
-                            <div class="step">
-                                <span><strong>Arrive ${destination}:</strong></span>
-                                <span>${secondsToTime(trip2.arrival)}</span>
+                            <div class="card-body pt-3">
+                                <div class="timeline-container">
+                                    <div class="timeline-line"></div>
+                                    
+                                    <div class="timeline-step">
+                                        <div class="${dotClass1}"></div>
+                                        <div class="timeline-content">
+                                            <div class="timeline-time fs-5">${secondsToTime(trip1.departure)}</div>
+                                            <div class="timeline-station fw-bold">${origin}</div>
+                                            <div class="text-muted small mt-1">Board ${leg1.line}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="timeline-step my-3">
+                                        <div class="timeline-dot transfer"></div>
+                                        <div class="timeline-content">
+                                            <div class="timeline-time fw-semibold">${secondsToTime(trip1.arrival)}</div>
+                                            <div class="timeline-station fw-bold text-dark">Sitabuldi Interchange</div>
+                                            <div class="transfer-details shadow-sm">
+                                                <i class="bi bi-arrow-repeat text-metro-orange me-1"></i> Transfer Time: 2 mins<br>
+                                                <span class="text-dark fw-medium mt-1 d-inline-block">Next train at ${secondsToTime(trip2.departure)} on ${leg2.line}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="timeline-step">
+                                        <div class="${dotClass2}"></div>
+                                        <div class="timeline-content">
+                                            <div class="timeline-time fs-5">${secondsToTime(trip2.arrival)}</div>
+                                            <div class="timeline-station fw-bold">${destination}</div>
+                                            <div class="text-muted small mt-1">Destination</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     `;
                 } else {
                     html += `
-                        <div class="itinerary">
-                            <div class="itinerary-header">Option ${idx + 1}</div>
-                            <div class="step error">Missed last connecting train for the day.</div>
+                        <div class="card card-custom mb-4 border-0">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-2">Option ${idx + 1}</h6>
+                                <div class="text-danger"><i class="bi bi-x-circle me-1"></i>Missed last connecting train for the day.</div>
+                            </div>
                         </div>
                     `;
                 }
@@ -184,7 +257,11 @@ function calculateRoutes() {
             const leg2Trips = getPreviousTrips(leg2, targetTimeSecs, MAX_ROUTE_OPTIONS);
 
             if (leg2Trips.length === 0) {
-                resultsDiv.innerHTML = '<p class="error">No earlier trains available today.</p>';
+                resultsDiv.innerHTML = `
+                    <div class="alert alert-warning d-flex align-items-center" role="alert">
+                        <i class="bi bi-info-circle-fill me-2 flex-shrink-0"></i>
+                        <div>No earlier trains available today.</div>
+                    </div>`;
                 return;
             }
 
@@ -195,29 +272,60 @@ function calculateRoutes() {
 
                 if (leg1Trips.length > 0) {
                     const trip1 = leg1Trips[0];
+                    const isAqua1 = leg1.line.toLowerCase().includes('aqua');
+                    const dotClass1 = isAqua1 ? 'timeline-dot aqua' : 'timeline-dot';
+                    const isAqua2 = leg2.line.toLowerCase().includes('aqua');
+                    const dotClass2 = isAqua2 ? 'timeline-dot aqua' : 'timeline-dot';
+
                     html += `
-                        <div class="itinerary">
-                            <div class="itinerary-header">Option ${idx + 1} (1 Interchange)</div>
-                            <div class="step">
-                                <span><strong>Depart ${origin}:</strong></span>
-                                <span>${secondsToTime(trip1.departure)}</span>
+                        <div class="card card-custom mb-4 border-0">
+                            <div class="card-header bg-white border-0 pt-3 pb-0">
+                                <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} <span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span></h6>
                             </div>
-                            <div class="step transfer">
-                                Arrive at Sitabuldi at ${secondsToTime(trip1.arrival)}<br>
-                                <em>Transfer 2 mins</em><br>
-                                Catch connecting train at ${secondsToTime(trip2.departure)}
-                            </div>
-                            <div class="step">
-                                <span><strong>Arrive ${destination}:</strong></span>
-                                <span>${secondsToTime(trip2.arrival)}</span>
+                            <div class="card-body pt-3">
+                                <div class="timeline-container">
+                                    <div class="timeline-line"></div>
+                                    
+                                    <div class="timeline-step">
+                                        <div class="${dotClass1}"></div>
+                                        <div class="timeline-content">
+                                            <div class="timeline-time fs-5">${secondsToTime(trip1.departure)}</div>
+                                            <div class="timeline-station fw-bold">${origin}</div>
+                                            <div class="text-muted small mt-1">Board ${leg1.line}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="timeline-step my-3">
+                                        <div class="timeline-dot transfer"></div>
+                                        <div class="timeline-content">
+                                            <div class="timeline-time fw-semibold">${secondsToTime(trip1.arrival)}</div>
+                                            <div class="timeline-station fw-bold text-dark">Sitabuldi Interchange</div>
+                                            <div class="transfer-details shadow-sm">
+                                                <i class="bi bi-arrow-repeat text-metro-orange me-1"></i> Transfer Time: 2 mins<br>
+                                                <span class="text-dark fw-medium mt-1 d-inline-block">Next train at ${secondsToTime(trip2.departure)} on ${leg2.line}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="timeline-step">
+                                        <div class="${dotClass2}"></div>
+                                        <div class="timeline-content">
+                                            <div class="timeline-time fs-5">${secondsToTime(trip2.arrival)}</div>
+                                            <div class="timeline-station fw-bold">${destination}</div>
+                                            <div class="text-muted small mt-1">Destination</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     `;
                 } else {
                     html += `
-                        <div class="itinerary">
-                            <div class="itinerary-header">Option ${idx + 1}</div>
-                            <div class="step error">Missed first connecting train for the day.</div>
+                        <div class="card card-custom mb-4 border-0">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-2">Option ${idx + 1}</h6>
+                                <div class="text-danger"><i class="bi bi-x-circle me-1"></i>Missed first connecting train for the day.</div>
+                            </div>
                         </div>
                     `;
                 }
