@@ -224,7 +224,7 @@ function calculateRoutes() {
                                             <div class="timeline-time fw-semibold">${secondsToTime(trip1.arrival)}</div>
                                             <div class="timeline-station fw-bold text-dark">Sitabuldi Interchange</div>
                                             <div class="transfer-details shadow-sm">
-                                                <i class="bi bi-arrow-repeat text-metro-orange me-1"></i> Transfer Time: 2 mins<br>
+                                                <i class="bi bi-arrow-repeat ${isAqua2 ? 'text-metro-aqua' : 'text-metro-orange'} me-1"></i> Transfer Time: 2 mins<br>
                                                 <span class="text-dark fw-medium mt-1 d-inline-block">Next train at ${secondsToTime(trip2.departure)} on ${leg2.line} from <strong>Platform ${leg2.dir.platforms[leg2.fromIdx]}</strong></span>
                                             </div>
                                         </div>
@@ -301,7 +301,7 @@ function calculateRoutes() {
                                             <div class="timeline-time fw-semibold">${secondsToTime(trip1.arrival)}</div>
                                             <div class="timeline-station fw-bold text-dark">Sitabuldi Interchange</div>
                                             <div class="transfer-details shadow-sm">
-                                                <i class="bi bi-arrow-repeat text-metro-orange me-1"></i> Transfer Time: 2 mins<br>
+                                                <i class="bi bi-arrow-repeat ${isAqua2 ? 'text-metro-aqua' : 'text-metro-orange'} me-1"></i> Transfer Time: 2 mins<br>
                                                 <span class="text-dark fw-medium mt-1 d-inline-block">Next train at ${secondsToTime(trip2.departure)} on ${leg2.line} from <strong>Platform ${leg2.dir.platforms[leg2.fromIdx]}</strong></span>
                                             </div>
                                         </div>

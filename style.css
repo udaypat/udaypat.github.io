@@ -1,0 +1,176 @@
+:root {
+    --metro-orange: #FF7A00;
+    --metro-aqua: #0078D7;
+    --bg-color: #f4f6f9;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: #333;
+    -webkit-font-smoothing: antialiased;
+}
+
+.text-metro-orange {
+    color: var(--metro-orange) !important;
+}
+
+.text-metro-aqua {
+    color: var(--metro-aqua) !important;
+}
+
+.btn-metro-orange {
+    background-color: var(--metro-orange);
+    color: white;
+    border: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-metro-orange:hover,
+.btn-metro-orange:focus {
+    background-color: var(--metro-orange);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 122, 0, 0.2);
+    filter: brightness(0.9);
+}
+
+.card-custom {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+    background: #ffffff;
+}
+
+.form-select,
+.form-control {
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    border: 1px solid #dee2e6;
+    font-size: 0.95rem;
+}
+
+.form-select:focus,
+.form-control:focus {
+    border-color: var(--metro-orange);
+    box-shadow: 0 0 0 0.25rem rgba(255, 122, 0, 0.25);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #555;
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+}
+
+/* Timeline Styles */
+.timeline-container {
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.timeline-line {
+    position: absolute;
+    left: calc(1.5rem + 7px);
+    top: 20px;
+    bottom: 20px;
+    width: 2px;
+    background: #e9ecef;
+    z-index: 0;
+}
+
+.timeline-step {
+    display: flex;
+    align-items: flex-start;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-step:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--metro-orange);
+    margin-right: 1rem;
+    margin-top: 4px;
+    flex-shrink: 0;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 1px var(--metro-orange);
+}
+
+.timeline-dot.aqua {
+    background: var(--metro-aqua);
+    box-shadow: 0 0 0 1px var(--metro-aqua);
+}
+
+.timeline-dot.transfer {
+    background: #fff;
+    border: 4px solid #6c757d;
+    box-shadow: none;
+}
+
+.timeline-content {
+    flex-grow: 1;
+}
+
+.timeline-time {
+    font-weight: 700;
+    color: #333;
+}
+
+.timeline-station {
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.transfer-details {
+    font-size: 0.85rem;
+    color: #6c757d;
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-top: 6px;
+    display: inline-block;
+}
+
+.swap-btn {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: -10px auto;
+    position: relative;
+    z-index: 2;
+}
+
+.swap-btn:hover {
+    background: #e9ecef;
+    color: var(--metro-orange);
+    border-color: #ced4da;
+}
+
+/* Custom Radio Toggle */
+.btn-group-toggle .btn {
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.btn-group-toggle .btn-check:checked+.btn {
+    background-color: var(--metro-orange);
+    border-color: var(--metro-orange);
+    color: white;
+}
