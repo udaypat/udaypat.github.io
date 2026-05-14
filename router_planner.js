@@ -132,7 +132,7 @@ function calculateRoutes() {
                                 <div class="timeline-content">
                                     <div class="timeline-time fs-5">${secondsToTime(trip.departure)}</div>
                                     <div class="timeline-station fw-bold">${origin}</div>
-                                    <div class="text-muted small mt-1">Board ${directSegment.line}</div>
+                                    <div class="text-muted small mt-1">Board ${directSegment.line} from <strong>Platform ${directSegment.dir.platforms[directSegment.fromIdx]}</strong></div>
                                 </div>
                             </div>
                             
@@ -214,7 +214,7 @@ function calculateRoutes() {
                                         <div class="timeline-content">
                                             <div class="timeline-time fs-5">${secondsToTime(trip1.departure)}</div>
                                             <div class="timeline-station fw-bold">${origin}</div>
-                                            <div class="text-muted small mt-1">Board ${leg1.line}</div>
+                                            <div class="text-muted small mt-1">Board ${leg1.line} from <strong>Platform ${leg1.dir.platforms[leg1.fromIdx]}</strong></div>
                                         </div>
                                     </div>
 
@@ -225,7 +225,7 @@ function calculateRoutes() {
                                             <div class="timeline-station fw-bold text-dark">Sitabuldi Interchange</div>
                                             <div class="transfer-details shadow-sm">
                                                 <i class="bi bi-arrow-repeat text-metro-orange me-1"></i> Transfer Time: 2 mins<br>
-                                                <span class="text-dark fw-medium mt-1 d-inline-block">Next train at ${secondsToTime(trip2.departure)} on ${leg2.line}</span>
+                                                <span class="text-dark fw-medium mt-1 d-inline-block">Next train at ${secondsToTime(trip2.departure)} on ${leg2.line} from <strong>Platform ${leg2.dir.platforms[leg2.fromIdx]}</strong></span>
                                             </div>
                                         </div>
                                     </div>
@@ -291,7 +291,7 @@ function calculateRoutes() {
                                         <div class="timeline-content">
                                             <div class="timeline-time fs-5">${secondsToTime(trip1.departure)}</div>
                                             <div class="timeline-station fw-bold">${origin}</div>
-                                            <div class="text-muted small mt-1">Board ${leg1.line}</div>
+                                            <div class="text-muted small mt-1">Board ${leg1.line} from <strong>Platform ${leg1.dir.platforms[leg1.fromIdx]}</strong></div>
                                         </div>
                                     </div>
 
@@ -302,7 +302,7 @@ function calculateRoutes() {
                                             <div class="timeline-station fw-bold text-dark">Sitabuldi Interchange</div>
                                             <div class="transfer-details shadow-sm">
                                                 <i class="bi bi-arrow-repeat text-metro-orange me-1"></i> Transfer Time: 2 mins<br>
-                                                <span class="text-dark fw-medium mt-1 d-inline-block">Next train at ${secondsToTime(trip2.departure)} on ${leg2.line}</span>
+                                                <span class="text-dark fw-medium mt-1 d-inline-block">Next train at ${secondsToTime(trip2.departure)} on ${leg2.line} from <strong>Platform ${leg2.dir.platforms[leg2.fromIdx]}</strong></span>
                                             </div>
                                         </div>
                                     </div>
