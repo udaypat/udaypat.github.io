@@ -47,11 +47,36 @@ function getNextTrips(segment, startTimeSecs, count = MAX_ROUTE_OPTIONS) {
     return trips;
 }
 
+// Get the previous N trips for a specific segment arriving before a given time
+function getPreviousTrips(segment, endTimeSecs, count = MAX_ROUTE_OPTIONS) {
+    const trips = [];
+    const fromOffset = segment.dir.travel_time_offsets_seconds[segment.fromIdx];
+    const toOffset = segment.dir.travel_time_offsets_seconds[segment.toIdx];
+
+    // Iterate backwards to get the latest possible trips that arrive before the target time
+    for (let i = segment.dir.departures.length - 1; i >= 0; i--) {
+        const depStr = segment.dir.departures[i];
+        const trainStartSecs = timeToSeconds(depStr);
+        const depAtStation = trainStartSecs + fromOffset;
+        const arrAtStation = trainStartSecs + toOffset;
+
+        if (arrAtStation <= endTimeSecs) {
+            trips.push({
+                departure: depAtStation,
+                arrival: arrAtStation
+            });
+            if (trips.length >= count) break;
+        }
+    }
+    return trips;
+}
+
 // Main Calculation
 function calculateRoutes() {
     const origin = document.getElementById('origin').value;
     const destination = document.getElementById('destination').value;
     const timeInput = document.getElementById('time').value;
+    const timeMode = document.querySelector('input[name="timeMode"]:checked').value;
     const resultsDiv = document.getElementById('results');
 
     resultsDiv.innerHTML = '';
@@ -61,16 +86,22 @@ function calculateRoutes() {
         return;
     }
 
-    const startTimeSecs = timeToSeconds(timeInput);
+    const targetTimeSecs = timeToSeconds(timeInput);
 
     // Check if direct route exists
     const directSegment = findRouteSegment(origin, destination);
 
     if (directSegment) {
         // Direct Route
-        const trips = getNextTrips(directSegment, startTimeSecs, MAX_ROUTE_OPTIONS);
+        let trips;
+        if (timeMode === 'depart') {
+            trips = getNextTrips(directSegment, targetTimeSecs, MAX_ROUTE_OPTIONS);
+        } else {
+            trips = getPreviousTrips(directSegment, targetTimeSecs, MAX_ROUTE_OPTIONS);
+        }
+
         if (trips.length === 0) {
-            resultsDiv.innerHTML = '<p class="error">No more trains available today.</p>';
+            resultsDiv.innerHTML = '<p class="error">No routes available for the selected time.</p>';
             return;
         }
 
@@ -105,48 +136,93 @@ function calculateRoutes() {
             return;
         }
 
-        const leg1Trips = getNextTrips(leg1, startTimeSecs, MAX_ROUTE_OPTIONS);
-
-        if (leg1Trips.length === 0) {
-            resultsDiv.innerHTML = '<p class="error">No more initial trains available today.</p>';
-            return;
-        }
-
         let html = '';
-        leg1Trips.forEach((trip1, idx) => {
-            // Apply 2 minute (120 seconds) transfer penalty
-            const earliestTransferTime = trip1.arrival + 120;
-            const leg2Trips = getNextTrips(leg2, earliestTransferTime, 1);
 
-            if (leg2Trips.length > 0) {
-                const trip2 = leg2Trips[0];
-                html += `
-                    <div class="itinerary">
-                        <div class="itinerary-header">Option ${idx + 1} (1 Interchange)</div>
-                        <div class="step">
-                            <span><strong>Depart ${origin}:</strong></span>
-                            <span>${secondsToTime(trip1.departure)}</span>
-                        </div>
-                        <div class="step transfer">
-                            Arrive at Sitabuldi at ${secondsToTime(trip1.arrival)}<br>
-                            <em>Transfer 2 mins</em><br>
-                            Catch connecting train at ${secondsToTime(trip2.departure)}
-                        </div>
-                        <div class="step">
-                            <span><strong>Arrive ${destination}:</strong></span>
-                            <span>${secondsToTime(trip2.arrival)}</span>
-                        </div>
-                    </div>
-                `;
-            } else {
-                html += `
-                    <div class="itinerary">
-                        <div class="itinerary-header">Option ${idx + 1}</div>
-                        <div class="step error">Missed last connecting train for the day.</div>
-                    </div>
-                `;
+        if (timeMode === 'depart') {
+            const leg1Trips = getNextTrips(leg1, targetTimeSecs, MAX_ROUTE_OPTIONS);
+
+            if (leg1Trips.length === 0) {
+                resultsDiv.innerHTML = '<p class="error">No more initial trains available today.</p>';
+                return;
             }
-        });
+
+            leg1Trips.forEach((trip1, idx) => {
+                // Apply 2 minute (120 seconds) transfer penalty
+                const earliestTransferTime = trip1.arrival + 120;
+                const leg2Trips = getNextTrips(leg2, earliestTransferTime, 1);
+
+                if (leg2Trips.length > 0) {
+                    const trip2 = leg2Trips[0];
+                    html += `
+                        <div class="itinerary">
+                            <div class="itinerary-header">Option ${idx + 1} (1 Interchange)</div>
+                            <div class="step">
+                                <span><strong>Depart ${origin}:</strong></span>
+                                <span>${secondsToTime(trip1.departure)}</span>
+                            </div>
+                            <div class="step transfer">
+                                Arrive at Sitabuldi at ${secondsToTime(trip1.arrival)}<br>
+                                <em>Transfer 2 mins</em><br>
+                                Catch connecting train at ${secondsToTime(trip2.departure)}
+                            </div>
+                            <div class="step">
+                                <span><strong>Arrive ${destination}:</strong></span>
+                                <span>${secondsToTime(trip2.arrival)}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="itinerary">
+                            <div class="itinerary-header">Option ${idx + 1}</div>
+                            <div class="step error">Missed last connecting train for the day.</div>
+                        </div>
+                    `;
+                }
+            });
+        } else {
+            const leg2Trips = getPreviousTrips(leg2, targetTimeSecs, MAX_ROUTE_OPTIONS);
+
+            if (leg2Trips.length === 0) {
+                resultsDiv.innerHTML = '<p class="error">No earlier trains available today.</p>';
+                return;
+            }
+
+            leg2Trips.forEach((trip2, idx) => {
+                // Apply 2 minute (120 seconds) transfer penalty backwards
+                const latestTransferTime = trip2.departure - 120;
+                const leg1Trips = getPreviousTrips(leg1, latestTransferTime, 1);
+
+                if (leg1Trips.length > 0) {
+                    const trip1 = leg1Trips[0];
+                    html += `
+                        <div class="itinerary">
+                            <div class="itinerary-header">Option ${idx + 1} (1 Interchange)</div>
+                            <div class="step">
+                                <span><strong>Depart ${origin}:</strong></span>
+                                <span>${secondsToTime(trip1.departure)}</span>
+                            </div>
+                            <div class="step transfer">
+                                Arrive at Sitabuldi at ${secondsToTime(trip1.arrival)}<br>
+                                <em>Transfer 2 mins</em><br>
+                                Catch connecting train at ${secondsToTime(trip2.departure)}
+                            </div>
+                            <div class="step">
+                                <span><strong>Arrive ${destination}:</strong></span>
+                                <span>${secondsToTime(trip2.arrival)}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="itinerary">
+                            <div class="itinerary-header">Option ${idx + 1}</div>
+                            <div class="step error">Missed first connecting train for the day.</div>
+                        </div>
+                    `;
+                }
+            });
+        }
         resultsDiv.innerHTML = html;
     }
 }
