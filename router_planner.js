@@ -159,6 +159,7 @@ function calculateRoutes() {
             const isLimitedStops = trip.tripInfo && trip.tripInfo.skipped_stations && trip.tripInfo.skipped_stations.length > 0;
             const badgeText = isLimitedStops ? 'Limited Stops' : 'Direct';
             const badgeClass = isLimitedStops ? 'badge bg-warning-subtle text-warning-emphasis ms-2 fw-semibold border border-warning-subtle' : 'badge bg-light text-secondary ms-2 fw-normal border';
+            const travelTimeMins = Math.round((trip.arrival - trip.departure) / 60);
 
             let warningHtml = '';
             if (isLimitedStops) {
@@ -171,8 +172,9 @@ function calculateRoutes() {
 
             html += `
                 <div class="card card-custom mb-4 border-0">
-                    <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
                         <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} <span class="${badgeClass}">${badgeText}</span></h6>
+                        <span class="text-secondary fw-semibold"><i class="bi bi-clock me-1"></i>${travelTimeMins} mins</span>
                     </div>
                     <div class="card-body pt-3">
                         ${warningHtml}
@@ -274,7 +276,8 @@ function calculateRoutes() {
                 const isLimited1 = trip1.tripInfo && trip1.tripInfo.skipped_stations && trip1.tripInfo.skipped_stations.length > 0;
                 const isLimited2 = trip2.tripInfo && trip2.tripInfo.skipped_stations && trip2.tripInfo.skipped_stations.length > 0;
 
-                let badgesHtml = '<span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span>';
+                const travelTimeMins = Math.round((trip2.arrival - trip1.departure) / 60);
+                let badgesHtml = `<span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span>`;
                 if (isLimited1 || isLimited2) {
                     badgesHtml += ' <span class="badge bg-warning-subtle text-warning-emphasis ms-2 fw-semibold border border-warning-subtle">Limited Stops</span>';
                 }
@@ -293,8 +296,9 @@ function calculateRoutes() {
 
                 html += `
                     <div class="card card-custom mb-4 border-0">
-                        <div class="card-header bg-white border-0 pt-3 pb-0">
+                        <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
                             <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} ${badgesHtml}</h6>
+                            <span class="text-secondary fw-semibold"><i class="bi bi-clock me-1"></i>${travelTimeMins} mins</span>
                         </div>
                         <div class="card-body pt-3">
                             ${warningHtml}
@@ -382,7 +386,8 @@ function calculateRoutes() {
                 const isLimited1 = trip1.tripInfo && trip1.tripInfo.skipped_stations && trip1.tripInfo.skipped_stations.length > 0;
                 const isLimited2 = trip2.tripInfo && trip2.tripInfo.skipped_stations && trip2.tripInfo.skipped_stations.length > 0;
 
-                let badgesHtml = '<span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span>';
+                const travelTimeMins = Math.round((trip2.arrival - trip1.departure) / 60);
+                let badgesHtml = `<span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span>`;
                 if (isLimited1 || isLimited2) {
                     badgesHtml += ' <span class="badge bg-warning-subtle text-warning-emphasis ms-2 fw-semibold border border-warning-subtle">Limited Stops</span>';
                 }
@@ -401,8 +406,9 @@ function calculateRoutes() {
 
                 html += `
                     <div class="card card-custom mb-4 border-0">
-                        <div class="card-header bg-white border-0 pt-3 pb-0">
+                        <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
                             <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} ${badgesHtml}</h6>
+                            <span class="text-secondary fw-semibold"><i class="bi bi-clock me-1"></i>${travelTimeMins} mins</span>
                         </div>
                         <div class="card-body pt-3">
                             ${warningHtml}
