@@ -26,20 +26,57 @@ function findRouteSegment(from, to) {
     return null;
 }
 
+// Get calculated departure and arrival times for a trip at specific stations
+function getTripTimes(dir, departure, fromIdx, toIdx) {
+    let depTimeStr;
+    let skippedStations = [];
+    let customOffsets = {};
+
+    if (typeof departure === 'object' && departure !== null) {
+        depTimeStr = departure.departure_time;
+        skippedStations = departure.skipped_stations || [];
+        customOffsets = departure.custom_offsets || {};
+    } else {
+        depTimeStr = departure;
+    }
+
+    const fromStation = dir.stations[fromIdx];
+    const toStation = dir.stations[toIdx];
+
+    // If either the origin or destination station is skipped/not serviced, this trip is not usable
+    if (skippedStations.includes(fromStation) || skippedStations.includes(toStation)) {
+        return null;
+    }
+
+    const trainStartSecs = timeToSeconds(depTimeStr);
+
+    const fromOffset = customOffsets[fromStation] !== undefined
+        ? customOffsets[fromStation]
+        : dir.travel_time_offsets_seconds[fromIdx];
+
+    const toOffset = customOffsets[toStation] !== undefined
+        ? customOffsets[toStation]
+        : dir.travel_time_offsets_seconds[toIdx];
+
+    return {
+        departure: trainStartSecs + fromOffset,
+        arrival: trainStartSecs + toOffset
+    };
+}
+
 // Get the next N trips for a specific segment starting after a given time
 function getNextTrips(segment, startTimeSecs, count = MAX_ROUTE_OPTIONS) {
     const trips = [];
-    const fromOffset = segment.dir.travel_time_offsets_seconds[segment.fromIdx];
-    const toOffset = segment.dir.travel_time_offsets_seconds[segment.toIdx];
 
-    for (let depStr of segment.dir.departures) {
-        const trainStartSecs = timeToSeconds(depStr);
-        const depAtStation = trainStartSecs + fromOffset;
+    for (let departure of segment.dir.departures) {
+        const tripTimes = getTripTimes(segment.dir, departure, segment.fromIdx, segment.toIdx);
+        if (!tripTimes) continue;
 
-        if (depAtStation >= startTimeSecs) {
+        if (tripTimes.departure >= startTimeSecs) {
             trips.push({
-                departure: depAtStation,
-                arrival: trainStartSecs + toOffset
+                departure: tripTimes.departure,
+                arrival: tripTimes.arrival,
+                tripInfo: typeof departure === 'object' ? departure : null
             });
             if (trips.length >= count) break;
         }
@@ -50,20 +87,18 @@ function getNextTrips(segment, startTimeSecs, count = MAX_ROUTE_OPTIONS) {
 // Get the previous N trips for a specific segment arriving before a given time
 function getPreviousTrips(segment, endTimeSecs, count = MAX_ROUTE_OPTIONS) {
     const trips = [];
-    const fromOffset = segment.dir.travel_time_offsets_seconds[segment.fromIdx];
-    const toOffset = segment.dir.travel_time_offsets_seconds[segment.toIdx];
 
     // Iterate backwards to get the latest possible trips that arrive before the target time
     for (let i = segment.dir.departures.length - 1; i >= 0; i--) {
-        const depStr = segment.dir.departures[i];
-        const trainStartSecs = timeToSeconds(depStr);
-        const depAtStation = trainStartSecs + fromOffset;
-        const arrAtStation = trainStartSecs + toOffset;
+        const departure = segment.dir.departures[i];
+        const tripTimes = getTripTimes(segment.dir, departure, segment.fromIdx, segment.toIdx);
+        if (!tripTimes) continue;
 
-        if (arrAtStation <= endTimeSecs) {
+        if (tripTimes.arrival <= endTimeSecs) {
             trips.push({
-                departure: depAtStation,
-                arrival: arrAtStation
+                departure: tripTimes.departure,
+                arrival: tripTimes.arrival,
+                tripInfo: typeof departure === 'object' ? departure : null
             });
             if (trips.length >= count) break;
         }
@@ -118,12 +153,26 @@ function calculateRoutes() {
         const dotClass = isAqua ? 'timeline-dot aqua' : 'timeline-dot';
 
         trips.forEach((trip, idx) => {
+            const isLimitedStops = trip.tripInfo && trip.tripInfo.skipped_stations && trip.tripInfo.skipped_stations.length > 0;
+            const badgeText = isLimitedStops ? 'Limited Stops' : 'Direct';
+            const badgeClass = isLimitedStops ? 'badge bg-warning-subtle text-warning-emphasis ms-2 fw-semibold border border-warning-subtle' : 'badge bg-light text-secondary ms-2 fw-normal border';
+
+            let warningHtml = '';
+            if (isLimitedStops) {
+                warningHtml = `
+                    <div class="alert alert-warning py-2 px-3 mb-3 d-flex align-items-center border-0 rounded-3" style="font-size: 0.85rem;">
+                        <i class="bi bi-info-circle-fill text-warning me-2 flex-shrink-0"></i>
+                        <div>This train runs express and skips some intermediate stations.</div>
+                    </div>`;
+            }
+
             html += `
                 <div class="card card-custom mb-4 border-0">
                     <div class="card-header bg-white border-0 pt-3 pb-0">
-                        <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} <span class="badge bg-light text-secondary ms-2 fw-normal border">Direct</span></h6>
+                        <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} <span class="${badgeClass}">${badgeText}</span></h6>
                     </div>
                     <div class="card-body pt-3">
+                        ${warningHtml}
                         <div class="timeline-container">
                             <div class="timeline-line"></div>
                             
@@ -200,12 +249,33 @@ function calculateRoutes() {
                     const isAqua2 = leg2.line.toLowerCase().includes('aqua');
                     const dotClass2 = isAqua2 ? 'timeline-dot aqua' : 'timeline-dot';
 
+                    const isLimited1 = trip1.tripInfo && trip1.tripInfo.skipped_stations && trip1.tripInfo.skipped_stations.length > 0;
+                    const isLimited2 = trip2.tripInfo && trip2.tripInfo.skipped_stations && trip2.tripInfo.skipped_stations.length > 0;
+
+                    let badgesHtml = '<span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span>';
+                    if (isLimited1 || isLimited2) {
+                        badgesHtml += ' <span class="badge bg-warning-subtle text-warning-emphasis ms-2 fw-semibold border border-warning-subtle">Limited Stops</span>';
+                    }
+
+                    let warningHtml = '';
+                    if (isLimited1 || isLimited2) {
+                        const skipMsg = isLimited1 && isLimited2 
+                            ? "Both connecting trains run express and skip some intermediate stations."
+                            : (isLimited1 ? "The first connecting train runs express and skips some intermediate stations." : "The second connecting train runs express and skips some intermediate stations.");
+                        warningHtml = `
+                            <div class="alert alert-warning py-2 px-3 mb-3 d-flex align-items-center border-0 rounded-3" style="font-size: 0.85rem;">
+                                <i class="bi bi-info-circle-fill text-warning me-2 flex-shrink-0"></i>
+                                <div>${skipMsg}</div>
+                            </div>`;
+                    }
+
                     html += `
                         <div class="card card-custom mb-4 border-0">
                             <div class="card-header bg-white border-0 pt-3 pb-0">
-                                <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} <span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span></h6>
+                                <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} ${badgesHtml}</h6>
                             </div>
                             <div class="card-body pt-3">
+                                ${warningHtml}
                                 <div class="timeline-container">
                                     <div class="timeline-line"></div>
                                     
@@ -277,12 +347,33 @@ function calculateRoutes() {
                     const isAqua2 = leg2.line.toLowerCase().includes('aqua');
                     const dotClass2 = isAqua2 ? 'timeline-dot aqua' : 'timeline-dot';
 
+                    const isLimited1 = trip1.tripInfo && trip1.tripInfo.skipped_stations && trip1.tripInfo.skipped_stations.length > 0;
+                    const isLimited2 = trip2.tripInfo && trip2.tripInfo.skipped_stations && trip2.tripInfo.skipped_stations.length > 0;
+
+                    let badgesHtml = '<span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span>';
+                    if (isLimited1 || isLimited2) {
+                        badgesHtml += ' <span class="badge bg-warning-subtle text-warning-emphasis ms-2 fw-semibold border border-warning-subtle">Limited Stops</span>';
+                    }
+
+                    let warningHtml = '';
+                    if (isLimited1 || isLimited2) {
+                        const skipMsg = isLimited1 && isLimited2 
+                            ? "Both connecting trains run express and skip some intermediate stations."
+                            : (isLimited1 ? "The first connecting train runs express and skips some intermediate stations." : "The second connecting train runs express and skips some intermediate stations.");
+                        warningHtml = `
+                            <div class="alert alert-warning py-2 px-3 mb-3 d-flex align-items-center border-0 rounded-3" style="font-size: 0.85rem;">
+                                <i class="bi bi-info-circle-fill text-warning me-2 flex-shrink-0"></i>
+                                <div>${skipMsg}</div>
+                            </div>`;
+                    }
+
                     html += `
                         <div class="card card-custom mb-4 border-0">
                             <div class="card-header bg-white border-0 pt-3 pb-0">
-                                <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} <span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span></h6>
+                                <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} ${badgesHtml}</h6>
                             </div>
                             <div class="card-body pt-3">
+                                ${warningHtml}
                                 <div class="timeline-container">
                                     <div class="timeline-line"></div>
                                     
