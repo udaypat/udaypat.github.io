@@ -148,6 +148,9 @@ function calculateRoutes() {
             return;
         }
 
+        // Sort trips by arrival time
+        trips.sort((a, b) => a.arrival - b.arrival);
+
         let html = '<h5 class="fw-bold mb-4 text-secondary"><i class="bi bi-list-task me-2"></i>Route Options</h5>';
         const isAqua = directSegment.line.toLowerCase().includes('aqua');
         const dotClass = isAqua ? 'timeline-dot aqua' : 'timeline-dot';
@@ -237,91 +240,100 @@ function calculateRoutes() {
                 return;
             }
 
-            leg1Trips.forEach((trip1, idx) => {
+            const options = [];
+            leg1Trips.forEach((trip1) => {
                 // Apply 2 minute (120 seconds) transfer penalty
                 const earliestTransferTime = trip1.arrival + 120;
                 const leg2Trips = getNextTrips(leg2, earliestTransferTime, 1);
 
                 if (leg2Trips.length > 0) {
-                    const trip2 = leg2Trips[0];
-                    const isAqua1 = leg1.line.toLowerCase().includes('aqua');
-                    const dotClass1 = isAqua1 ? 'timeline-dot aqua' : 'timeline-dot';
-                    const isAqua2 = leg2.line.toLowerCase().includes('aqua');
-                    const dotClass2 = isAqua2 ? 'timeline-dot aqua' : 'timeline-dot';
+                    options.push({ trip1, trip2: leg2Trips[0] });
+                }
+            });
 
-                    const isLimited1 = trip1.tripInfo && trip1.tripInfo.skipped_stations && trip1.tripInfo.skipped_stations.length > 0;
-                    const isLimited2 = trip2.tripInfo && trip2.tripInfo.skipped_stations && trip2.tripInfo.skipped_stations.length > 0;
+            if (options.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div class="alert alert-warning d-flex align-items-center" role="alert">
+                        <i class="bi bi-info-circle-fill me-2 flex-shrink-0"></i>
+                        <div>No connection routes available for the selected time.</div>
+                    </div>`;
+                return;
+            }
 
-                    let badgesHtml = '<span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span>';
-                    if (isLimited1 || isLimited2) {
-                        badgesHtml += ' <span class="badge bg-warning-subtle text-warning-emphasis ms-2 fw-semibold border border-warning-subtle">Limited Stops</span>';
-                    }
+            // Sort options by leg2 arrival time
+            options.sort((a, b) => a.trip2.arrival - b.trip2.arrival);
 
-                    let warningHtml = '';
-                    if (isLimited1 || isLimited2) {
-                        const skipMsg = isLimited1 && isLimited2 
-                            ? "Both connecting trains run express and skip some intermediate stations."
-                            : (isLimited1 ? "The first connecting train runs express and skips some intermediate stations." : "The second connecting train runs express and skips some intermediate stations.");
-                        warningHtml = `
-                            <div class="alert alert-warning py-2 px-3 mb-3 d-flex align-items-center border-0 rounded-3" style="font-size: 0.85rem;">
-                                <i class="bi bi-info-circle-fill text-warning me-2 flex-shrink-0"></i>
-                                <div>${skipMsg}</div>
-                            </div>`;
-                    }
+            options.forEach((opt, idx) => {
+                const trip1 = opt.trip1;
+                const trip2 = opt.trip2;
+                const isAqua1 = leg1.line.toLowerCase().includes('aqua');
+                const dotClass1 = isAqua1 ? 'timeline-dot aqua' : 'timeline-dot';
+                const isAqua2 = leg2.line.toLowerCase().includes('aqua');
+                const dotClass2 = isAqua2 ? 'timeline-dot aqua' : 'timeline-dot';
 
-                    html += `
-                        <div class="card card-custom mb-4 border-0">
-                            <div class="card-header bg-white border-0 pt-3 pb-0">
-                                <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} ${badgesHtml}</h6>
-                            </div>
-                            <div class="card-body pt-3">
-                                ${warningHtml}
-                                <div class="timeline-container">
-                                    <div class="timeline-line"></div>
-                                    
-                                    <div class="timeline-step">
-                                        <div class="${dotClass1}"></div>
-                                        <div class="timeline-content">
-                                            <div class="timeline-time fs-5">${secondsToTime(trip1.departure)}</div>
-                                            <div class="timeline-station fw-bold">${origin}</div>
-                                            <div class="text-muted small mt-1">Board ${leg1.line} from <strong>Platform ${leg1.dir.platforms[leg1.fromIdx]}</strong></div>
+                const isLimited1 = trip1.tripInfo && trip1.tripInfo.skipped_stations && trip1.tripInfo.skipped_stations.length > 0;
+                const isLimited2 = trip2.tripInfo && trip2.tripInfo.skipped_stations && trip2.tripInfo.skipped_stations.length > 0;
+
+                let badgesHtml = '<span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span>';
+                if (isLimited1 || isLimited2) {
+                    badgesHtml += ' <span class="badge bg-warning-subtle text-warning-emphasis ms-2 fw-semibold border border-warning-subtle">Limited Stops</span>';
+                }
+
+                let warningHtml = '';
+                if (isLimited1 || isLimited2) {
+                    const skipMsg = isLimited1 && isLimited2 
+                        ? "Both connecting trains run express and skip some intermediate stations."
+                        : (isLimited1 ? "The first connecting train runs express and skips some intermediate stations." : "The second connecting train runs express and skips some intermediate stations.");
+                    warningHtml = `
+                        <div class="alert alert-warning py-2 px-3 mb-3 d-flex align-items-center border-0 rounded-3" style="font-size: 0.85rem;">
+                            <i class="bi bi-info-circle-fill text-warning me-2 flex-shrink-0"></i>
+                            <div>${skipMsg}</div>
+                        </div>`;
+                }
+
+                html += `
+                    <div class="card card-custom mb-4 border-0">
+                        <div class="card-header bg-white border-0 pt-3 pb-0">
+                            <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} ${badgesHtml}</h6>
+                        </div>
+                        <div class="card-body pt-3">
+                            ${warningHtml}
+                            <div class="timeline-container">
+                                <div class="timeline-line"></div>
+                                
+                                <div class="timeline-step">
+                                    <div class="${dotClass1}"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-time fs-5">${secondsToTime(trip1.departure)}</div>
+                                        <div class="timeline-station fw-bold">${origin}</div>
+                                        <div class="text-muted small mt-1">Board ${leg1.line} from <strong>Platform ${leg1.dir.platforms[leg1.fromIdx]}</strong></div>
+                                    </div>
+                                </div>
+
+                                <div class="timeline-step my-3">
+                                    <div class="timeline-dot transfer"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-time fw-semibold">${secondsToTime(trip1.arrival)}</div>
+                                        <div class="timeline-station fw-bold text-dark">Sitabuldi Interchange</div>
+                                        <div class="transfer-details shadow-sm">
+                                            <i class="bi bi-arrow-repeat ${isAqua2 ? 'text-metro-aqua' : 'text-metro-orange'} me-1"></i> Transfer Time: 2 mins<br>
+                                            <span class="text-dark fw-medium mt-1 d-inline-block">Next train at ${secondsToTime(trip2.departure)} on ${leg2.line} from <strong>Platform ${leg2.dir.platforms[leg2.fromIdx]}</strong></span>
                                         </div>
                                     </div>
-
-                                    <div class="timeline-step my-3">
-                                        <div class="timeline-dot transfer"></div>
-                                        <div class="timeline-content">
-                                            <div class="timeline-time fw-semibold">${secondsToTime(trip1.arrival)}</div>
-                                            <div class="timeline-station fw-bold text-dark">Sitabuldi Interchange</div>
-                                            <div class="transfer-details shadow-sm">
-                                                <i class="bi bi-arrow-repeat ${isAqua2 ? 'text-metro-aqua' : 'text-metro-orange'} me-1"></i> Transfer Time: 2 mins<br>
-                                                <span class="text-dark fw-medium mt-1 d-inline-block">Next train at ${secondsToTime(trip2.departure)} on ${leg2.line} from <strong>Platform ${leg2.dir.platforms[leg2.fromIdx]}</strong></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="timeline-step">
-                                        <div class="${dotClass2}"></div>
-                                        <div class="timeline-content">
-                                            <div class="timeline-time fs-5">${secondsToTime(trip2.arrival)}</div>
-                                            <div class="timeline-station fw-bold">${destination}</div>
-                                            <div class="text-muted small mt-1">Destination</div>
-                                        </div>
+                                </div>
+                                
+                                <div class="timeline-step">
+                                    <div class="${dotClass2}"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-time fs-5">${secondsToTime(trip2.arrival)}</div>
+                                        <div class="timeline-station fw-bold">${destination}</div>
+                                        <div class="text-muted small mt-1">Destination</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    `;
-                } else {
-                    html += `
-                        <div class="card card-custom mb-4 border-0">
-                            <div class="card-body">
-                                <h6 class="fw-bold mb-2">Option ${idx + 1}</h6>
-                                <div class="text-danger"><i class="bi bi-x-circle me-1"></i>Missed last connecting train for the day.</div>
-                            </div>
-                        </div>
-                    `;
-                }
+                    </div>
+                `;
             });
         } else {
             const leg2Trips = getPreviousTrips(leg2, targetTimeSecs, MAX_ROUTE_OPTIONS);
@@ -335,91 +347,100 @@ function calculateRoutes() {
                 return;
             }
 
-            leg2Trips.forEach((trip2, idx) => {
+            const options = [];
+            leg2Trips.forEach((trip2) => {
                 // Apply 2 minute (120 seconds) transfer penalty backwards
                 const latestTransferTime = trip2.departure - 120;
                 const leg1Trips = getPreviousTrips(leg1, latestTransferTime, 1);
 
                 if (leg1Trips.length > 0) {
-                    const trip1 = leg1Trips[0];
-                    const isAqua1 = leg1.line.toLowerCase().includes('aqua');
-                    const dotClass1 = isAqua1 ? 'timeline-dot aqua' : 'timeline-dot';
-                    const isAqua2 = leg2.line.toLowerCase().includes('aqua');
-                    const dotClass2 = isAqua2 ? 'timeline-dot aqua' : 'timeline-dot';
+                    options.push({ trip1: leg1Trips[0], trip2 });
+                }
+            });
 
-                    const isLimited1 = trip1.tripInfo && trip1.tripInfo.skipped_stations && trip1.tripInfo.skipped_stations.length > 0;
-                    const isLimited2 = trip2.tripInfo && trip2.tripInfo.skipped_stations && trip2.tripInfo.skipped_stations.length > 0;
+            if (options.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div class="alert alert-warning d-flex align-items-center" role="alert">
+                        <i class="bi bi-info-circle-fill me-2 flex-shrink-0"></i>
+                        <div>No connection routes available for the selected time.</div>
+                    </div>`;
+                return;
+            }
 
-                    let badgesHtml = '<span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span>';
-                    if (isLimited1 || isLimited2) {
-                        badgesHtml += ' <span class="badge bg-warning-subtle text-warning-emphasis ms-2 fw-semibold border border-warning-subtle">Limited Stops</span>';
-                    }
+            // Sort options by leg2 arrival time
+            options.sort((a, b) => a.trip2.arrival - b.trip2.arrival);
 
-                    let warningHtml = '';
-                    if (isLimited1 || isLimited2) {
-                        const skipMsg = isLimited1 && isLimited2 
-                            ? "Both connecting trains run express and skip some intermediate stations."
-                            : (isLimited1 ? "The first connecting train runs express and skips some intermediate stations." : "The second connecting train runs express and skips some intermediate stations.");
-                        warningHtml = `
-                            <div class="alert alert-warning py-2 px-3 mb-3 d-flex align-items-center border-0 rounded-3" style="font-size: 0.85rem;">
-                                <i class="bi bi-info-circle-fill text-warning me-2 flex-shrink-0"></i>
-                                <div>${skipMsg}</div>
-                            </div>`;
-                    }
+            options.forEach((opt, idx) => {
+                const trip1 = opt.trip1;
+                const trip2 = opt.trip2;
+                const isAqua1 = leg1.line.toLowerCase().includes('aqua');
+                const dotClass1 = isAqua1 ? 'timeline-dot aqua' : 'timeline-dot';
+                const isAqua2 = leg2.line.toLowerCase().includes('aqua');
+                const dotClass2 = isAqua2 ? 'timeline-dot aqua' : 'timeline-dot';
 
-                    html += `
-                        <div class="card card-custom mb-4 border-0">
-                            <div class="card-header bg-white border-0 pt-3 pb-0">
-                                <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} ${badgesHtml}</h6>
-                            </div>
-                            <div class="card-body pt-3">
-                                ${warningHtml}
-                                <div class="timeline-container">
-                                    <div class="timeline-line"></div>
-                                    
-                                    <div class="timeline-step">
-                                        <div class="${dotClass1}"></div>
-                                        <div class="timeline-content">
-                                            <div class="timeline-time fs-5">${secondsToTime(trip1.departure)}</div>
-                                            <div class="timeline-station fw-bold">${origin}</div>
-                                            <div class="text-muted small mt-1">Board ${leg1.line} from <strong>Platform ${leg1.dir.platforms[leg1.fromIdx]}</strong></div>
+                const isLimited1 = trip1.tripInfo && trip1.tripInfo.skipped_stations && trip1.tripInfo.skipped_stations.length > 0;
+                const isLimited2 = trip2.tripInfo && trip2.tripInfo.skipped_stations && trip2.tripInfo.skipped_stations.length > 0;
+
+                let badgesHtml = '<span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span>';
+                if (isLimited1 || isLimited2) {
+                    badgesHtml += ' <span class="badge bg-warning-subtle text-warning-emphasis ms-2 fw-semibold border border-warning-subtle">Limited Stops</span>';
+                }
+
+                let warningHtml = '';
+                if (isLimited1 || isLimited2) {
+                    const skipMsg = isLimited1 && isLimited2 
+                        ? "Both connecting trains run express and skip some intermediate stations."
+                        : (isLimited1 ? "The first connecting train runs express and skips some intermediate stations." : "The second connecting train runs express and skips some intermediate stations.");
+                    warningHtml = `
+                        <div class="alert alert-warning py-2 px-3 mb-3 d-flex align-items-center border-0 rounded-3" style="font-size: 0.85rem;">
+                            <i class="bi bi-info-circle-fill text-warning me-2 flex-shrink-0"></i>
+                            <div>${skipMsg}</div>
+                        </div>`;
+                }
+
+                html += `
+                    <div class="card card-custom mb-4 border-0">
+                        <div class="card-header bg-white border-0 pt-3 pb-0">
+                            <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} ${badgesHtml}</h6>
+                        </div>
+                        <div class="card-body pt-3">
+                            ${warningHtml}
+                            <div class="timeline-container">
+                                <div class="timeline-line"></div>
+                                
+                                <div class="timeline-step">
+                                    <div class="${dotClass1}"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-time fs-5">${secondsToTime(trip1.departure)}</div>
+                                        <div class="timeline-station fw-bold">${origin}</div>
+                                        <div class="text-muted small mt-1">Board ${leg1.line} from <strong>Platform ${leg1.dir.platforms[leg1.fromIdx]}</strong></div>
+                                    </div>
+                                </div>
+
+                                <div class="timeline-step my-3">
+                                    <div class="timeline-dot transfer"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-time fw-semibold">${secondsToTime(trip1.arrival)}</div>
+                                        <div class="timeline-station fw-bold text-dark">Sitabuldi Interchange</div>
+                                        <div class="transfer-details shadow-sm">
+                                            <i class="bi bi-arrow-repeat ${isAqua2 ? 'text-metro-aqua' : 'text-metro-orange'} me-1"></i> Transfer Time: 2 mins<br>
+                                            <span class="text-dark fw-medium mt-1 d-inline-block">Next train at ${secondsToTime(trip2.departure)} on ${leg2.line} from <strong>Platform ${leg2.dir.platforms[leg2.fromIdx]}</strong></span>
                                         </div>
                                     </div>
-
-                                    <div class="timeline-step my-3">
-                                        <div class="timeline-dot transfer"></div>
-                                        <div class="timeline-content">
-                                            <div class="timeline-time fw-semibold">${secondsToTime(trip1.arrival)}</div>
-                                            <div class="timeline-station fw-bold text-dark">Sitabuldi Interchange</div>
-                                            <div class="transfer-details shadow-sm">
-                                                <i class="bi bi-arrow-repeat ${isAqua2 ? 'text-metro-aqua' : 'text-metro-orange'} me-1"></i> Transfer Time: 2 mins<br>
-                                                <span class="text-dark fw-medium mt-1 d-inline-block">Next train at ${secondsToTime(trip2.departure)} on ${leg2.line} from <strong>Platform ${leg2.dir.platforms[leg2.fromIdx]}</strong></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="timeline-step">
-                                        <div class="${dotClass2}"></div>
-                                        <div class="timeline-content">
-                                            <div class="timeline-time fs-5">${secondsToTime(trip2.arrival)}</div>
-                                            <div class="timeline-station fw-bold">${destination}</div>
-                                            <div class="text-muted small mt-1">Destination</div>
-                                        </div>
+                                </div>
+                                
+                                <div class="timeline-step">
+                                    <div class="${dotClass2}"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-time fs-5">${secondsToTime(trip2.arrival)}</div>
+                                        <div class="timeline-station fw-bold">${destination}</div>
+                                        <div class="text-muted small mt-1">Destination</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    `;
-                } else {
-                    html += `
-                        <div class="card card-custom mb-4 border-0">
-                            <div class="card-body">
-                                <h6 class="fw-bold mb-2">Option ${idx + 1}</h6>
-                                <div class="text-danger"><i class="bi bi-x-circle me-1"></i>Missed first connecting train for the day.</div>
-                            </div>
-                        </div>
-                    `;
-                }
+                    </div>
+                `;
             });
         }
         resultsDiv.innerHTML = html;
