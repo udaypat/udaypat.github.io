@@ -151,51 +151,67 @@ function calculateRoutes() {
         // Sort trips by arrival time
         trips.sort((a, b) => a.arrival - b.arrival);
 
-        let html = '<h5 class="fw-bold mb-4 text-secondary"><i class="bi bi-list-task me-2"></i>Route Options</h5>';
+        let html = '<h5 class="fw-bold mb-4 text-dark d-flex align-items-center gap-2"><i class="bi bi-bezier2 text-metro-orange"></i> Route Options</h5>';
         const isAqua = directSegment.line.toLowerCase().includes('aqua');
         const dotClass = isAqua ? 'timeline-dot aqua' : 'timeline-dot';
 
         trips.forEach((trip, idx) => {
             const isLimitedStops = trip.tripInfo && trip.tripInfo.skipped_stations && trip.tripInfo.skipped_stations.length > 0;
             const badgeText = isLimitedStops ? 'Limited Stops' : 'Direct';
-            const badgeClass = isLimitedStops ? 'badge bg-warning-subtle text-warning-emphasis ms-2 fw-semibold border border-warning-subtle' : 'badge bg-light text-secondary ms-2 fw-normal border';
+            const badgeClass = isLimitedStops ? 'badge bg-warning-subtle text-warning-emphasis fw-semibold border border-warning-subtle' : 'badge bg-light text-secondary fw-normal border';
             const travelTimeMins = Math.round((trip.arrival - trip.departure) / 60);
 
             let warningHtml = '';
             if (isLimitedStops) {
                 warningHtml = `
-                    <div class="alert alert-warning py-2 px-3 mb-3 d-flex align-items-center border-0 rounded-3" style="font-size: 0.85rem;">
-                        <i class="bi bi-info-circle-fill text-warning me-2 flex-shrink-0"></i>
+                    <div class="d-flex align-items-center gap-2 p-3 mb-3 rounded-3" style="background-color: rgba(255, 107, 0, 0.08); border: 1px solid rgba(255, 107, 0, 0.15); color: var(--metro-orange); font-size: 0.85rem; font-weight: 600;">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
                         <div>This train runs express and skips some intermediate stations.</div>
                     </div>`;
             }
 
             html += `
-                <div class="card card-custom mb-4 border-0">
-                    <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
-                        <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} <span class="${badgeClass}">${badgeText}</span></h6>
-                        <span class="text-secondary fw-semibold"><i class="bi bi-clock me-1"></i>${travelTimeMins} mins</span>
+                <div class="card card-custom route-card mb-4 border-0 animated-fade-in">
+                    <div class="card-header bg-transparent border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fs-6 fw-bold text-dark">Option ${idx + 1}</span>
+                            <span class="${badgeClass}">${badgeText}</span>
+                        </div>
+                        <span class="text-dark fw-bold fs-6"><i class="bi bi-clock-history me-1 text-muted"></i>${travelTimeMins} mins</span>
                     </div>
                     <div class="card-body pt-3">
                         ${warningHtml}
+                        
+
+
                         <div class="timeline-container">
-                            <div class="timeline-line"></div>
-                            
-                            <div class="timeline-step">
+                            <div class="timeline-step" style="--line-color: ${isAqua ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
                                 <div class="${dotClass}"></div>
                                 <div class="timeline-content">
-                                    <div class="timeline-time fs-5">${secondsToTime(trip.departure)}</div>
-                                    <div class="timeline-station fw-bold">${origin}</div>
-                                    <div class="text-muted small mt-1">Board ${directSegment.line} from <strong>Platform ${directSegment.dir.platforms[directSegment.fromIdx]}</strong></div>
+                                    <div class="d-flex align-items-baseline gap-2">
+                                        <span class="timeline-time">${secondsToTime(trip.departure)}</span>
+                                        <span class="timeline-station">${origin}</span>
+                                    </div>
+                                    <div class="text-muted small mt-2 d-flex align-items-center gap-2 flex-wrap">
+                                        <span>Board</span>
+                                        <span class="badge-line ${isAqua ? 'badge-aqua-line' : 'badge-orange-line'}">${directSegment.line}</span>
+                                        <span>from</span>
+                                        <span class="badge-pf">PF ${directSegment.dir.platforms[directSegment.fromIdx]}</span>
+                                    </div>
                                 </div>
                             </div>
                             
                             <div class="timeline-step">
                                 <div class="${dotClass}"></div>
                                 <div class="timeline-content">
-                                    <div class="timeline-time fs-5">${secondsToTime(trip.arrival)}</div>
-                                    <div class="timeline-station fw-bold">${destination}</div>
-                                    <div class="text-muted small mt-1">Arrive at <strong>Platform ${directSegment.dir.platforms[directSegment.toIdx]}</strong></div>
+                                    <div class="d-flex align-items-baseline gap-2">
+                                        <span class="timeline-time">${secondsToTime(trip.arrival)}</span>
+                                        <span class="timeline-station">${destination}</span>
+                                    </div>
+                                    <div class="text-muted small mt-2 d-flex align-items-center gap-2 flex-wrap">
+                                        <span>Arrive at</span>
+                                        <span class="badge-pf">PF ${directSegment.dir.platforms[directSegment.toIdx]}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -227,8 +243,7 @@ function calculateRoutes() {
                 </div>`;
             return;
         }
-
-        let html = '<h5 class="fw-bold mb-4 text-secondary"><i class="bi bi-list-task me-2"></i>Route Options</h5>';
+        let html = '<h5 class="fw-bold mb-4 text-dark d-flex align-items-center gap-2"><i class="bi bi-bezier2 text-metro-orange"></i> Route Options</h5>';
 
         if (timeMode === 'depart') {
             const leg1Trips = getNextTrips(leg1, targetTimeSecs, MAX_ROUTE_OPTIONS);
@@ -277,9 +292,9 @@ function calculateRoutes() {
                 const isLimited2 = trip2.tripInfo && trip2.tripInfo.skipped_stations && trip2.tripInfo.skipped_stations.length > 0;
 
                 const travelTimeMins = Math.round((trip2.arrival - trip1.departure) / 60);
-                let badgesHtml = `<span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span>`;
+                let badgesHtml = `<span class="badge bg-light text-secondary fw-normal border">1 Transfer</span>`;
                 if (isLimited1 || isLimited2) {
-                    badgesHtml += ' <span class="badge bg-warning-subtle text-warning-emphasis ms-2 fw-semibold border border-warning-subtle">Limited Stops</span>';
+                    badgesHtml += ' <span class="badge bg-warning-subtle text-warning-emphasis fw-semibold border border-warning-subtle">Limited Stops</span>';
                 }
 
                 let warningHtml = '';
@@ -288,41 +303,67 @@ function calculateRoutes() {
                         ? "Both connecting trains run express and skip some intermediate stations."
                         : (isLimited1 ? "The first connecting train runs express and skips some intermediate stations." : "The second connecting train runs express and skips some intermediate stations.");
                     warningHtml = `
-                        <div class="alert alert-warning py-2 px-3 mb-3 d-flex align-items-center border-0 rounded-3" style="font-size: 0.85rem;">
-                            <i class="bi bi-info-circle-fill text-warning me-2 flex-shrink-0"></i>
+                        <div class="d-flex align-items-center gap-2 p-3 mb-3 rounded-3" style="background-color: rgba(255, 107, 0, 0.08); border: 1px solid rgba(255, 107, 0, 0.15); color: var(--metro-orange); font-size: 0.85rem; font-weight: 600;">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
                             <div>${skipMsg}</div>
                         </div>`;
                 }
 
                 html += `
-                    <div class="card card-custom mb-4 border-0">
-                        <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
-                            <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} ${badgesHtml}</h6>
-                            <span class="text-secondary fw-semibold"><i class="bi bi-clock me-1"></i>${travelTimeMins} mins</span>
+                    <div class="card card-custom route-card mb-4 border-0 animated-fade-in">
+                        <div class="card-header bg-transparent border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fs-6 fw-bold text-dark">Option ${idx + 1}</span>
+                                ${badgesHtml}
+                            </div>
+                            <span class="text-dark fw-bold fs-6"><i class="bi bi-clock-history me-1 text-muted"></i>${travelTimeMins} mins</span>
                         </div>
                         <div class="card-body pt-3">
                             ${warningHtml}
+
+
+
                             <div class="timeline-container">
-                                <div class="timeline-line"></div>
-                                
-                                <div class="timeline-step">
+                                <div class="timeline-step" style="--line-color: ${isAqua1 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
                                     <div class="${dotClass1}"></div>
                                     <div class="timeline-content">
-                                        <div class="timeline-time fs-5">${secondsToTime(trip1.departure)}</div>
-                                        <div class="timeline-station fw-bold">${origin}</div>
-                                        <div class="text-muted small mt-1">Board ${leg1.line} from <strong>Platform ${leg1.dir.platforms[leg1.fromIdx]}</strong></div>
+                                        <div class="d-flex align-items-baseline gap-2">
+                                            <span class="timeline-time">${secondsToTime(trip1.departure)}</span>
+                                            <span class="timeline-station">${origin}</span>
+                                        </div>
+                                        <div class="text-muted small mt-2 d-flex align-items-center gap-2 flex-wrap">
+                                            <span>Board</span>
+                                            <span class="badge-line ${isAqua1 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg1.line}</span>
+                                            <span>from</span>
+                                            <span class="badge-pf">PF ${leg1.dir.platforms[leg1.fromIdx]}</span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="timeline-step my-3">
+                                <div class="timeline-step" style="--line-color: ${isAqua2 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
                                     <div class="timeline-dot transfer"></div>
                                     <div class="timeline-content">
-                                        <div class="timeline-time fw-semibold">${secondsToTime(trip1.arrival)}</div>
-                                        <div class="timeline-station fw-bold text-dark">Sitabuldi Interchange</div>
-                                        <div class="transfer-details shadow-sm">
-                                            Arrive at <strong>Platform ${leg1.dir.platforms[leg1.toIdx]}</strong><br>
-                                            <i class="bi bi-arrow-repeat ${isAqua2 ? 'text-metro-aqua' : 'text-metro-orange'} me-1"></i> Transfer Time: 2 mins<br>
-                                            <span class="text-dark fw-medium mt-1 d-inline-block">Next train at ${secondsToTime(trip2.departure)} on ${leg2.line} from <strong>Platform ${leg2.dir.platforms[leg2.fromIdx]}</strong></span>
+                                        <div class="d-flex align-items-baseline gap-2">
+                                            <span class="timeline-time text-muted">${secondsToTime(trip1.arrival)}</span>
+                                            <span class="timeline-station text-dark">Sitabuldi Interchange</span>
+                                        </div>
+                                        <div class="transfer-details-card">
+                                            <div class="d-flex align-items-center gap-1 text-muted small fw-semibold">
+                                                <span>Arrive at</span>
+                                                <span class="badge-pf">PF ${leg1.dir.platforms[leg1.toIdx]}</span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 my-2 text-muted small fw-semibold">
+                                                <i class="bi bi-arrow-repeat text-metro-orange fs-6"></i>
+                                                <span>Transfer Time: 2 mins</span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 text-dark mt-2 pt-2 border-top flex-wrap fw-semibold">
+                                                <span>Next train at</span>
+                                                <span class="fw-bold text-dark" style="font-size: 1.05rem;">${secondsToTime(trip2.departure)}</span>
+                                                <span>on</span>
+                                                <span class="badge-line ${isAqua2 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg2.line}</span>
+                                                <span>from</span>
+                                                <span class="badge-pf">PF ${leg2.dir.platforms[leg2.fromIdx]}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -330,9 +371,14 @@ function calculateRoutes() {
                                 <div class="timeline-step">
                                     <div class="${dotClass2}"></div>
                                     <div class="timeline-content">
-                                        <div class="timeline-time fs-5">${secondsToTime(trip2.arrival)}</div>
-                                        <div class="timeline-station fw-bold">${destination}</div>
-                                        <div class="text-muted small mt-1">Arrive at <strong>Platform ${leg2.dir.platforms[leg2.toIdx]}</strong></div>
+                                        <div class="d-flex align-items-baseline gap-2">
+                                            <span class="timeline-time">${secondsToTime(trip2.arrival)}</span>
+                                            <span class="timeline-station">${destination}</span>
+                                        </div>
+                                        <div class="text-muted small mt-2 d-flex align-items-center gap-2 flex-wrap">
+                                            <span>Arrive at</span>
+                                            <span class="badge-pf">PF ${leg2.dir.platforms[leg2.toIdx]}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -387,9 +433,9 @@ function calculateRoutes() {
                 const isLimited2 = trip2.tripInfo && trip2.tripInfo.skipped_stations && trip2.tripInfo.skipped_stations.length > 0;
 
                 const travelTimeMins = Math.round((trip2.arrival - trip1.departure) / 60);
-                let badgesHtml = `<span class="badge bg-light text-secondary ms-2 fw-normal border">1 Transfer</span>`;
+                let badgesHtml = `<span class="badge bg-light text-secondary fw-normal border">1 Transfer</span>`;
                 if (isLimited1 || isLimited2) {
-                    badgesHtml += ' <span class="badge bg-warning-subtle text-warning-emphasis ms-2 fw-semibold border border-warning-subtle">Limited Stops</span>';
+                    badgesHtml += ' <span class="badge bg-warning-subtle text-warning-emphasis fw-semibold border border-warning-subtle">Limited Stops</span>';
                 }
 
                 let warningHtml = '';
@@ -398,41 +444,67 @@ function calculateRoutes() {
                         ? "Both connecting trains run express and skip some intermediate stations."
                         : (isLimited1 ? "The first connecting train runs express and skips some intermediate stations." : "The second connecting train runs express and skips some intermediate stations.");
                     warningHtml = `
-                        <div class="alert alert-warning py-2 px-3 mb-3 d-flex align-items-center border-0 rounded-3" style="font-size: 0.85rem;">
-                            <i class="bi bi-info-circle-fill text-warning me-2 flex-shrink-0"></i>
+                        <div class="d-flex align-items-center gap-2 p-3 mb-3 rounded-3" style="background-color: rgba(255, 107, 0, 0.08); border: 1px solid rgba(255, 107, 0, 0.15); color: var(--metro-orange); font-size: 0.85rem; font-weight: 600;">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
                             <div>${skipMsg}</div>
                         </div>`;
                 }
 
                 html += `
-                    <div class="card card-custom mb-4 border-0">
-                        <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
-                            <h6 class="fw-bold mb-0 text-metro-orange">Option ${idx + 1} ${badgesHtml}</h6>
-                            <span class="text-secondary fw-semibold"><i class="bi bi-clock me-1"></i>${travelTimeMins} mins</span>
+                    <div class="card card-custom route-card mb-4 border-0 animated-fade-in">
+                        <div class="card-header bg-transparent border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fs-6 fw-bold text-dark">Option ${idx + 1}</span>
+                                ${badgesHtml}
+                            </div>
+                            <span class="text-dark fw-bold fs-6"><i class="bi bi-clock-history me-1 text-muted"></i>${travelTimeMins} mins</span>
                         </div>
                         <div class="card-body pt-3">
                             ${warningHtml}
+
+
+
                             <div class="timeline-container">
-                                <div class="timeline-line"></div>
-                                
-                                <div class="timeline-step">
+                                <div class="timeline-step" style="--line-color: ${isAqua1 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
                                     <div class="${dotClass1}"></div>
                                     <div class="timeline-content">
-                                        <div class="timeline-time fs-5">${secondsToTime(trip1.departure)}</div>
-                                        <div class="timeline-station fw-bold">${origin}</div>
-                                        <div class="text-muted small mt-1">Board ${leg1.line} from <strong>Platform ${leg1.dir.platforms[leg1.fromIdx]}</strong></div>
+                                        <div class="d-flex align-items-baseline gap-2">
+                                            <span class="timeline-time">${secondsToTime(trip1.departure)}</span>
+                                            <span class="timeline-station">${origin}</span>
+                                        </div>
+                                        <div class="text-muted small mt-2 d-flex align-items-center gap-2 flex-wrap">
+                                            <span>Board</span>
+                                            <span class="badge-line ${isAqua1 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg1.line}</span>
+                                            <span>from</span>
+                                            <span class="badge-pf">PF ${leg1.dir.platforms[leg1.fromIdx]}</span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="timeline-step my-3">
+                                <div class="timeline-step" style="--line-color: ${isAqua2 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
                                     <div class="timeline-dot transfer"></div>
                                     <div class="timeline-content">
-                                        <div class="timeline-time fw-semibold">${secondsToTime(trip1.arrival)}</div>
-                                        <div class="timeline-station fw-bold text-dark">Sitabuldi Interchange</div>
-                                        <div class="transfer-details shadow-sm">
-                                            Arrive at <strong>Platform ${leg1.dir.platforms[leg1.toIdx]}</strong><br>
-                                            <i class="bi bi-arrow-repeat ${isAqua2 ? 'text-metro-aqua' : 'text-metro-orange'} me-1"></i> Transfer Time: 2 mins<br>
-                                            <span class="text-dark fw-medium mt-1 d-inline-block">Next train at ${secondsToTime(trip2.departure)} on ${leg2.line} from <strong>Platform ${leg2.dir.platforms[leg2.fromIdx]}</strong></span>
+                                        <div class="d-flex align-items-baseline gap-2">
+                                            <span class="timeline-time text-muted">${secondsToTime(trip1.arrival)}</span>
+                                            <span class="timeline-station text-dark">Sitabuldi Interchange</span>
+                                        </div>
+                                        <div class="transfer-details-card">
+                                            <div class="d-flex align-items-center gap-1 text-muted small fw-semibold">
+                                                <span>Arrive at</span>
+                                                <span class="badge-pf">PF ${leg1.dir.platforms[leg1.toIdx]}</span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 my-2 text-muted small fw-semibold">
+                                                <i class="bi bi-arrow-repeat text-metro-orange fs-6"></i>
+                                                <span>Transfer Time: 2 mins</span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 text-dark mt-2 pt-2 border-top flex-wrap fw-semibold">
+                                                <span>Next train at</span>
+                                                <span class="fw-bold text-dark" style="font-size: 1.05rem;">${secondsToTime(trip2.departure)}</span>
+                                                <span>on</span>
+                                                <span class="badge-line ${isAqua2 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg2.line}</span>
+                                                <span>from</span>
+                                                <span class="badge-pf">PF ${leg2.dir.platforms[leg2.fromIdx]}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -440,9 +512,14 @@ function calculateRoutes() {
                                 <div class="timeline-step">
                                     <div class="${dotClass2}"></div>
                                     <div class="timeline-content">
-                                        <div class="timeline-time fs-5">${secondsToTime(trip2.arrival)}</div>
-                                        <div class="timeline-station fw-bold">${destination}</div>
-                                        <div class="text-muted small mt-1">Arrive at <strong>Platform ${leg2.dir.platforms[leg2.toIdx]}</strong></div>
+                                        <div class="d-flex align-items-baseline gap-2">
+                                            <span class="timeline-time">${secondsToTime(trip2.arrival)}</span>
+                                            <span class="timeline-station">${destination}</span>
+                                        </div>
+                                        <div class="text-muted small mt-2 d-flex align-items-center gap-2 flex-wrap">
+                                            <span>Arrive at</span>
+                                            <span class="badge-pf">PF ${leg2.dir.platforms[leg2.toIdx]}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
