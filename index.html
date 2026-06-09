@@ -103,67 +103,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="router_planner.js"></script>
-
-    <script>
-        let metroData = null;
-
-        // Populate Dropdowns
-        function initDropdowns() {
-            const stationsSet = new Set();
-            metroData.lines.forEach(line => {
-                line.directions[0].stations.forEach(s => stationsSet.add(s));
-            });
-
-            const stations = Array.from(stationsSet).sort();
-            const originSelect = document.getElementById('origin');
-            const destSelect = document.getElementById('destination');
-
-            stations.forEach(station => {
-                originSelect.add(new Option(station, station));
-                destSelect.add(new Option(station, station));
-            });
-
-            // Set default destinations
-            originSelect.value = "Automotive Square";
-            destSelect.value = "Lokmanya Nagar";
-        }
-
-        // Swap Stations Helper
-        function swapStations() {
-            const origin = document.getElementById('origin');
-            const dest = document.getElementById('destination');
-            const temp = origin.value;
-            origin.value = dest.value;
-            dest.value = temp;
-        }
-
-        // Initialize Flatpickr
-        flatpickr("#time", {
-            enableTime: true,
-            noCalendar: true,
-            dateFormat: "H:i",
-            altInput: true,
-            altFormat: "h:i K",
-            time_24hr: false,
-            defaultDate: new Date()
-        });
-
-        // Load Data
-        fetch('routes.json')
-            .then(response => response.json())
-            .then(data => {
-                metroData = data;
-                initDropdowns();
-            })
-            .catch(error => {
-                console.error('Error loading routes.json:', error);
-                document.getElementById('results').innerHTML = `
-                    <div class="alert alert-danger d-flex align-items-center" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
-                        <div>Error loading route data. Please ensure routes.json is available.</div>
-                    </div>`;
-            });
-    </script>
+    <script src="app.js"></script>
 </body>
 
 </html>

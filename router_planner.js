@@ -13,7 +13,7 @@ function secondsToTime(secs) {
 }
 
 // Find Line and Direction for a given journey
-function findRouteSegment(from, to) {
+function findRouteSegment(metroData, from, to) {
     for (let line of metroData.lines) {
         for (let dir of line.directions) {
             const fromIdx = dir.stations.indexOf(from);
@@ -107,28 +107,15 @@ function getPreviousTrips(segment, endTimeSecs, count = MAX_ROUTE_OPTIONS) {
 }
 
 // Main Calculation
-function calculateRoutes() {
-    const origin = document.getElementById('origin').value;
-    const destination = document.getElementById('destination').value;
-    const timeInput = document.getElementById('time').value;
-    const timeMode = document.querySelector('input[name="timeMode"]:checked').value;
-    const resultsDiv = document.getElementById('results');
-
-    resultsDiv.innerHTML = '';
-
+function planRoutes(metroData, origin, destination, timeInput, timeMode) {
     if (origin === destination) {
-        resultsDiv.innerHTML = `
-            <div class="alert alert-warning d-flex align-items-center" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
-                <div>Origin and destination cannot be the same.</div>
-            </div>`;
-        return;
+        return { status: 'same_station' };
     }
 
     const targetTimeSecs = timeToSeconds(timeInput);
 
     // Check if direct route exists
-    const directSegment = findRouteSegment(origin, destination);
+    const directSegment = findRouteSegment(metroData, origin, destination);
 
     if (directSegment) {
         // Direct Route
@@ -140,121 +127,54 @@ function calculateRoutes() {
         }
 
         if (trips.length === 0) {
-            resultsDiv.innerHTML = `
-                <div class="alert alert-warning d-flex align-items-center" role="alert">
-                    <i class="bi bi-info-circle-fill me-2 flex-shrink-0"></i>
-                    <div>No routes available for the selected time.</div>
-                </div>`;
-            return;
+            return { status: 'no_routes' };
         }
 
         // Sort trips by arrival time
         trips.sort((a, b) => a.arrival - b.arrival);
 
-        let html = '<h5 class="fw-bold mb-3 text-dark d-flex align-items-center gap-2"><i class="bi bi-bezier2 text-metro-orange"></i> Route Options</h5>';
-        const isAqua = directSegment.line.toLowerCase().includes('aqua');
-        const dotClass = isAqua ? 'timeline-dot aqua' : 'timeline-dot';
-
-        trips.forEach((trip, idx) => {
+        const options = trips.map(trip => {
             const isLimitedStops = trip.tripInfo && trip.tripInfo.skipped_stations && trip.tripInfo.skipped_stations.length > 0;
-            const badgeText = isLimitedStops ? 'Limited Stops' : 'Direct';
-            const badgeClass = isLimitedStops ? 'badge bg-warning-subtle text-warning-emphasis fw-semibold border border-warning-subtle' : 'badge bg-light text-secondary fw-normal border';
-            const travelTimeMins = Math.round((trip.arrival - trip.departure) / 60);
-
-            let warningHtml = '';
-            if (isLimitedStops) {
-                warningHtml = `
-                    <div class="d-flex align-items-center gap-2 p-3 mb-2 rounded-3" style="background-color: rgba(255, 107, 0, 0.08); border: 1px solid rgba(255, 107, 0, 0.15); color: var(--metro-orange); font-size: 0.85rem; font-weight: 600;">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                        <div>This train runs express and skips some intermediate stations.</div>
-                    </div>`;
-            }
-
-            html += `
-                <div class="card card-custom route-card mb-3 border-0 animated-fade-in">
-                    <div class="card-header bg-transparent border-0 pt-3 pb-0">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="fs-6 fw-bold text-dark text-nowrap">Option ${idx + 1}</span>
-                            <span class="text-dark fw-bold fs-6 text-nowrap"><i class="bi bi-clock-history me-1 text-muted"></i>${travelTimeMins} mins</span>
-                        </div>
-                        <div class="d-flex gap-2 mt-2 flex-wrap">
-                            <span class="${badgeClass}">${badgeText}</span>
-                        </div>
-                    </div>
-                    <div class="card-body pt-2">
-                        ${warningHtml}
-                        
-
-                        <div class="timeline-container">
-                            <div class="timeline-step" style="--line-color: ${isAqua ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
-                                <div class="${dotClass}"></div>
-                                <div class="timeline-content">
-                                    <div class="d-flex align-items-baseline gap-2">
-                                        <span class="timeline-time">${secondsToTime(trip.departure)}</span>
-                                        <span class="timeline-station">${origin}</span>
-                                    </div>
-                                    <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
-                                        <span>Board</span>
-                                        <span class="badge-line ${isAqua ? 'badge-aqua-line' : 'badge-orange-line'}">${directSegment.line}</span>
-                                        <span class="badge-pf">PF ${directSegment.dir.platforms[directSegment.fromIdx]}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="timeline-step">
-                                <div class="${dotClass}"></div>
-                                <div class="timeline-content">
-                                    <div class="d-flex align-items-baseline gap-2">
-                                        <span class="timeline-time">${secondsToTime(trip.arrival)}</span>
-                                        <span class="timeline-station">${destination}</span>
-                                    </div>
-                                    <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
-                                        <span>Arrive</span>
-                                        <span class="badge-pf">PF ${directSegment.dir.platforms[directSegment.toIdx]}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
+            return {
+                isInterchange: false,
+                travelTimeMins: Math.round((trip.arrival - trip.departure) / 60),
+                isLimitedStops: isLimitedStops,
+                legs: [
+                    {
+                        line: directSegment.line,
+                        fromStation: origin,
+                        toStation: destination,
+                        departureTimeSecs: trip.departure,
+                        arrivalTimeSecs: trip.arrival,
+                        fromPlatform: directSegment.dir.platforms[directSegment.fromIdx],
+                        toPlatform: directSegment.dir.platforms[directSegment.toIdx],
+                        isLimitedStops: isLimitedStops,
+                        tripInfo: trip.tripInfo
+                    }
+                ]
+            };
         });
-        resultsDiv.innerHTML = html;
+
+        return { status: 'success', options };
     } else {
         // Interchange Route (via Sitabuldi)
         const interchange = "Sitabuldi";
         if (origin === interchange || destination === interchange) {
-            resultsDiv.innerHTML = `
-                <div class="alert alert-danger d-flex align-items-center" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
-                    <div>Invalid route configuration.</div>
-                </div>`;
-            return;
+            return { status: 'invalid_configuration' };
         }
 
-        const leg1 = findRouteSegment(origin, interchange);
-        const leg2 = findRouteSegment(interchange, destination);
+        const leg1 = findRouteSegment(metroData, origin, interchange);
+        const leg2 = findRouteSegment(metroData, interchange, destination);
 
         if (!leg1 || !leg2) {
-            resultsDiv.innerHTML = `
-                <div class="alert alert-danger d-flex align-items-center" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
-                    <div>Route not found.</div>
-                </div>`;
-            return;
+            return { status: 'route_not_found' };
         }
-        let html = '<h5 class="fw-bold mb-3 text-dark d-flex align-items-center gap-2"><i class="bi bi-bezier2 text-metro-orange"></i> Route Options</h5>';
 
         if (timeMode === 'depart') {
             const leg1Trips = getNextTrips(leg1, targetTimeSecs, MAX_ROUTE_OPTIONS);
 
             if (leg1Trips.length === 0) {
-                resultsDiv.innerHTML = `
-                    <div class="alert alert-warning d-flex align-items-center" role="alert">
-                        <i class="bi bi-info-circle-fill me-2 flex-shrink-0"></i>
-                        <div>No more initial trains available today.</div>
-                    </div>`;
-                return;
+                return { status: 'no_initial_trains' };
             }
 
             const options = [];
@@ -264,142 +184,53 @@ function calculateRoutes() {
                 const leg2Trips = getNextTrips(leg2, earliestTransferTime, 1);
 
                 if (leg2Trips.length > 0) {
-                    options.push({ trip1, trip2: leg2Trips[0] });
+                    const trip2 = leg2Trips[0];
+                    const isLimited1 = trip1.tripInfo && trip1.tripInfo.skipped_stations && trip1.tripInfo.skipped_stations.length > 0;
+                    const isLimited2 = trip2.tripInfo && trip2.tripInfo.skipped_stations && trip2.tripInfo.skipped_stations.length > 0;
+                    options.push({
+                        isInterchange: true,
+                        travelTimeMins: Math.round((trip2.arrival - trip1.departure) / 60),
+                        isLimitedStops: isLimited1 || isLimited2,
+                        legs: [
+                            {
+                                line: leg1.line,
+                                fromStation: origin,
+                                toStation: interchange,
+                                departureTimeSecs: trip1.departure,
+                                arrivalTimeSecs: trip1.arrival,
+                                fromPlatform: leg1.dir.platforms[leg1.fromIdx],
+                                toPlatform: leg1.dir.platforms[leg1.toIdx],
+                                isLimitedStops: isLimited1,
+                                tripInfo: trip1.tripInfo
+                            },
+                            {
+                                line: leg2.line,
+                                fromStation: interchange,
+                                toStation: destination,
+                                departureTimeSecs: trip2.departure,
+                                arrivalTimeSecs: trip2.arrival,
+                                fromPlatform: leg2.dir.platforms[leg2.fromIdx],
+                                toPlatform: leg2.dir.platforms[leg2.toIdx],
+                                isLimitedStops: isLimited2,
+                                tripInfo: trip2.tripInfo
+                            }
+                        ]
+                    });
                 }
             });
 
             if (options.length === 0) {
-                resultsDiv.innerHTML = `
-                    <div class="alert alert-warning d-flex align-items-center" role="alert">
-                        <i class="bi bi-info-circle-fill me-2 flex-shrink-0"></i>
-                        <div>No connection routes available for the selected time.</div>
-                    </div>`;
-                return;
+                return { status: 'no_connection_routes' };
             }
 
             // Sort options by leg2 arrival time
-            options.sort((a, b) => a.trip2.arrival - b.trip2.arrival);
-
-            options.forEach((opt, idx) => {
-                const trip1 = opt.trip1;
-                const trip2 = opt.trip2;
-                const isAqua1 = leg1.line.toLowerCase().includes('aqua');
-                const dotClass1 = isAqua1 ? 'timeline-dot aqua' : 'timeline-dot';
-                const isAqua2 = leg2.line.toLowerCase().includes('aqua');
-                const dotClass2 = isAqua2 ? 'timeline-dot aqua' : 'timeline-dot';
-
-                const isLimited1 = trip1.tripInfo && trip1.tripInfo.skipped_stations && trip1.tripInfo.skipped_stations.length > 0;
-                const isLimited2 = trip2.tripInfo && trip2.tripInfo.skipped_stations && trip2.tripInfo.skipped_stations.length > 0;
-
-                const travelTimeMins = Math.round((trip2.arrival - trip1.departure) / 60);
-                let badgesHtml = `<span class="badge bg-light text-secondary fw-normal border">1 Transfer</span>`;
-                if (isLimited1 || isLimited2) {
-                    badgesHtml += ' <span class="badge bg-warning-subtle text-warning-emphasis fw-semibold border border-warning-subtle">Limited Stops</span>';
-                }
-
-                let warningHtml = '';
-                if (isLimited1 || isLimited2) {
-                    const skipMsg = isLimited1 && isLimited2 
-                        ? "Both connecting trains run express and skip some intermediate stations."
-                        : (isLimited1 ? "The first connecting train runs express and skips some intermediate stations." : "The second connecting train runs express and skips some intermediate stations.");
-                    warningHtml = `
-                        <div class="d-flex align-items-center gap-2 p-3 mb-2 rounded-3" style="background-color: rgba(255, 107, 0, 0.08); border: 1px solid rgba(255, 107, 0, 0.15); color: var(--metro-orange); font-size: 0.85rem; font-weight: 600;">
-                            <i class="bi bi-exclamation-triangle-fill"></i>
-                            <div>${skipMsg}</div>
-                        </div>`;
-                }
-
-                html += `
-                    <div class="card card-custom route-card mb-3 border-0 animated-fade-in">
-                        <div class="card-header bg-transparent border-0 pt-3 pb-0">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="fs-6 fw-bold text-dark text-nowrap">Option ${idx + 1}</span>
-                                <span class="text-dark fw-bold fs-6 text-nowrap"><i class="bi bi-clock-history me-1 text-muted"></i>${travelTimeMins} mins</span>
-                            </div>
-                            <div class="d-flex gap-2 mt-2 flex-wrap">
-                                ${badgesHtml}
-                            </div>
-                        </div>
-                        <div class="card-body pt-2">
-                            ${warningHtml}
-
-                            <div class="timeline-container">
-                                <!-- Step 1: Origin Boarding -->
-                                <div class="timeline-step" style="--line-color: ${isAqua1 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
-                                    <div class="${dotClass1}"></div>
-                                    <div class="timeline-content">
-                                        <div class="d-flex align-items-baseline gap-2">
-                                            <span class="timeline-time">${secondsToTime(trip1.departure)}</span>
-                                            <span class="timeline-station">${origin}</span>
-                                        </div>
-                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
-                                            <span>Board</span>
-                                            <span class="badge-line ${isAqua1 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg1.line}</span>
-                                            <span class="badge-pf">PF ${leg1.dir.platforms[leg1.fromIdx]}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Step 2: Interchange Arrival -->
-                                <div class="timeline-step transfer-walk" style="--line-color: #CBD5E1">
-                                    <div class="${dotClass1}"></div>
-                                    <div class="timeline-content">
-                                        <div class="d-flex align-items-baseline gap-2">
-                                            <span class="timeline-time text-muted">${secondsToTime(trip1.arrival)}</span>
-                                            <span class="timeline-station text-muted">Sitabuldi Interchange</span>
-                                        </div>
-                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
-                                            <span>Arrive</span>
-                                            <span class="badge-pf">PF ${leg1.dir.platforms[leg1.toIdx]}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Step 3: Interchange Boarding -->
-                                <div class="timeline-step" style="--line-color: ${isAqua2 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
-                                    <div class="${dotClass2}"></div>
-                                    <div class="timeline-content">
-                                        <div class="d-flex align-items-baseline gap-2">
-                                            <span class="timeline-time">${secondsToTime(trip2.departure)}</span>
-                                            <span class="timeline-station">Sitabuldi Interchange</span>
-                                        </div>
-                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
-                                            <span>Board</span>
-                                            <span class="badge-line ${isAqua2 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg2.line}</span>
-                                            <span class="badge-pf">PF ${leg2.dir.platforms[leg2.fromIdx]}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Step 4: Destination Arrival -->
-                                <div class="timeline-step">
-                                    <div class="${dotClass2}"></div>
-                                    <div class="timeline-content">
-                                        <div class="d-flex align-items-baseline gap-2">
-                                            <span class="timeline-time">${secondsToTime(trip2.arrival)}</span>
-                                            <span class="timeline-station">${destination}</span>
-                                        </div>
-                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
-                                            <span>Arrive</span>
-                                            <span class="badge-pf">PF ${leg2.dir.platforms[leg2.toIdx]}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
+            options.sort((a, b) => a.legs[1].arrivalTimeSecs - b.legs[1].arrivalTimeSecs);
+            return { status: 'success', options };
         } else {
             const leg2Trips = getPreviousTrips(leg2, targetTimeSecs, MAX_ROUTE_OPTIONS);
 
             if (leg2Trips.length === 0) {
-                resultsDiv.innerHTML = `
-                    <div class="alert alert-warning d-flex align-items-center" role="alert">
-                        <i class="bi bi-info-circle-fill me-2 flex-shrink-0"></i>
-                        <div>No earlier trains available today.</div>
-                    </div>`;
-                return;
+                return { status: 'no_earlier_trains' };
             }
 
             const options = [];
@@ -409,133 +240,48 @@ function calculateRoutes() {
                 const leg1Trips = getPreviousTrips(leg1, latestTransferTime, 1);
 
                 if (leg1Trips.length > 0) {
-                    options.push({ trip1: leg1Trips[0], trip2 });
+                    const trip1 = leg1Trips[0];
+                    const isLimited1 = trip1.tripInfo && trip1.tripInfo.skipped_stations && trip1.tripInfo.skipped_stations.length > 0;
+                    const isLimited2 = trip2.tripInfo && trip2.tripInfo.skipped_stations && trip2.tripInfo.skipped_stations.length > 0;
+                    options.push({
+                        isInterchange: true,
+                        travelTimeMins: Math.round((trip2.arrival - trip1.departure) / 60),
+                        isLimitedStops: isLimited1 || isLimited2,
+                        legs: [
+                            {
+                                line: leg1.line,
+                                fromStation: origin,
+                                toStation: interchange,
+                                departureTimeSecs: trip1.departure,
+                                arrivalTimeSecs: trip1.arrival,
+                                fromPlatform: leg1.dir.platforms[leg1.fromIdx],
+                                toPlatform: leg1.dir.platforms[leg1.toIdx],
+                                isLimitedStops: isLimited1,
+                                tripInfo: trip1.tripInfo
+                            },
+                            {
+                                line: leg2.line,
+                                fromStation: interchange,
+                                toStation: destination,
+                                departureTimeSecs: trip2.departure,
+                                arrivalTimeSecs: trip2.arrival,
+                                fromPlatform: leg2.dir.platforms[leg2.fromIdx],
+                                toPlatform: leg2.dir.platforms[leg2.toIdx],
+                                isLimitedStops: isLimited2,
+                                tripInfo: trip2.tripInfo
+                            }
+                        ]
+                    });
                 }
             });
 
             if (options.length === 0) {
-                resultsDiv.innerHTML = `
-                    <div class="alert alert-warning d-flex align-items-center" role="alert">
-                        <i class="bi bi-info-circle-fill me-2 flex-shrink-0"></i>
-                        <div>No connection routes available for the selected time.</div>
-                    </div>`;
-                return;
+                return { status: 'no_connection_routes' };
             }
 
             // Sort options by leg2 arrival time
-            options.sort((a, b) => a.trip2.arrival - b.trip2.arrival);
-
-            options.forEach((opt, idx) => {
-                const trip1 = opt.trip1;
-                const trip2 = opt.trip2;
-                const isAqua1 = leg1.line.toLowerCase().includes('aqua');
-                const dotClass1 = isAqua1 ? 'timeline-dot aqua' : 'timeline-dot';
-                const isAqua2 = leg2.line.toLowerCase().includes('aqua');
-                const dotClass2 = isAqua2 ? 'timeline-dot aqua' : 'timeline-dot';
-
-                const isLimited1 = trip1.tripInfo && trip1.tripInfo.skipped_stations && trip1.tripInfo.skipped_stations.length > 0;
-                const isLimited2 = trip2.tripInfo && trip2.tripInfo.skipped_stations && trip2.tripInfo.skipped_stations.length > 0;
-
-                const travelTimeMins = Math.round((trip2.arrival - trip1.departure) / 60);
-                let badgesHtml = `<span class="badge bg-light text-secondary fw-normal border">1 Transfer</span>`;
-                if (isLimited1 || isLimited2) {
-                    badgesHtml += ' <span class="badge bg-warning-subtle text-warning-emphasis fw-semibold border border-warning-subtle">Limited Stops</span>';
-                }
-
-                let warningHtml = '';
-                if (isLimited1 || isLimited2) {
-                    const skipMsg = isLimited1 && isLimited2 
-                        ? "Both connecting trains run express and skip some intermediate stations."
-                        : (isLimited1 ? "The first connecting train runs express and skips some intermediate stations." : "The second connecting train runs express and skips some intermediate stations.");
-                    warningHtml = `
-                        <div class="d-flex align-items-center gap-2 p-3 mb-2 rounded-3" style="background-color: rgba(255, 107, 0, 0.08); border: 1px solid rgba(255, 107, 0, 0.15); color: var(--metro-orange); font-size: 0.85rem; font-weight: 600;">
-                            <i class="bi bi-exclamation-triangle-fill"></i>
-                            <div>${skipMsg}</div>
-                        </div>`;
-                }
-
-                html += `
-                    <div class="card card-custom route-card mb-3 border-0 animated-fade-in">
-                        <div class="card-header bg-transparent border-0 pt-3 pb-0">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="fs-6 fw-bold text-dark text-nowrap">Option ${idx + 1}</span>
-                                <span class="text-dark fw-bold fs-6 text-nowrap"><i class="bi bi-clock-history me-1 text-muted"></i>${travelTimeMins} mins</span>
-                            </div>
-                            <div class="d-flex gap-2 mt-2 flex-wrap">
-                                ${badgesHtml}
-                            </div>
-                        </div>
-                        <div class="card-body pt-2">
-                            ${warningHtml}
-
-                            <div class="timeline-container">
-                                <!-- Step 1: Origin Boarding -->
-                                <div class="timeline-step" style="--line-color: ${isAqua1 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
-                                    <div class="${dotClass1}"></div>
-                                    <div class="timeline-content">
-                                        <div class="d-flex align-items-baseline gap-2">
-                                            <span class="timeline-time">${secondsToTime(trip1.departure)}</span>
-                                            <span class="timeline-station">${origin}</span>
-                                        </div>
-                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
-                                            <span>Board</span>
-                                            <span class="badge-line ${isAqua1 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg1.line}</span>
-                                            <span class="badge-pf">PF ${leg1.dir.platforms[leg1.fromIdx]}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Step 2: Interchange Arrival -->
-                                <div class="timeline-step transfer-walk" style="--line-color: #CBD5E1">
-                                    <div class="${dotClass1}"></div>
-                                    <div class="timeline-content">
-                                        <div class="d-flex align-items-baseline gap-2">
-                                            <span class="timeline-time text-muted">${secondsToTime(trip1.arrival)}</span>
-                                            <span class="timeline-station text-muted">Sitabuldi Interchange</span>
-                                        </div>
-                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
-                                            <span>Arrive</span>
-                                            <span class="badge-pf">PF ${leg1.dir.platforms[leg1.toIdx]}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Step 3: Interchange Boarding -->
-                                <div class="timeline-step" style="--line-color: ${isAqua2 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
-                                    <div class="${dotClass2}"></div>
-                                    <div class="timeline-content">
-                                        <div class="d-flex align-items-baseline gap-2">
-                                            <span class="timeline-time">${secondsToTime(trip2.departure)}</span>
-                                            <span class="timeline-station">Sitabuldi Interchange</span>
-                                        </div>
-                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
-                                            <span>Board</span>
-                                            <span class="badge-line ${isAqua2 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg2.line}</span>
-                                            <span class="badge-pf">PF ${leg2.dir.platforms[leg2.fromIdx]}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Step 4: Destination Arrival -->
-                                <div class="timeline-step">
-                                    <div class="${dotClass2}"></div>
-                                    <div class="timeline-content">
-                                        <div class="d-flex align-items-baseline gap-2">
-                                            <span class="timeline-time">${secondsToTime(trip2.arrival)}</span>
-                                            <span class="timeline-station">${destination}</span>
-                                        </div>
-                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
-                                            <span>Arrive</span>
-                                            <span class="badge-pf">PF ${leg2.dir.platforms[leg2.toIdx]}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
+            options.sort((a, b) => a.legs[1].arrivalTimeSecs - b.legs[1].arrivalTimeSecs);
+            return { status: 'success', options };
         }
-        resultsDiv.innerHTML = html;
     }
 }
