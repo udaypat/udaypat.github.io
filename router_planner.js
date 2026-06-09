@@ -352,10 +352,6 @@ function calculateRoutes() {
                                                 <span>Arrive at</span>
                                                 <span class="badge-pf">PF ${leg1.dir.platforms[leg1.toIdx]}</span>
                                             </div>
-                                            <div class="d-flex align-items-center gap-2 my-2 text-muted small fw-semibold">
-                                                <i class="bi bi-arrow-repeat text-metro-orange fs-6"></i>
-                                                <span>Transfer Time: 2 mins</span>
-                                            </div>
                                             <div class="d-flex align-items-center gap-2 text-dark mt-2 pt-2 border-top flex-wrap fw-semibold">
                                                 <span>Next train at</span>
                                                 <span class="fw-bold text-dark" style="font-size: 1.05rem;">${secondsToTime(trip2.departure)}</span>
@@ -492,10 +488,6 @@ function calculateRoutes() {
                                             <div class="d-flex align-items-center gap-1 text-muted small fw-semibold">
                                                 <span>Arrive at</span>
                                                 <span class="badge-pf">PF ${leg1.dir.platforms[leg1.toIdx]}</span>
-                                            </div>
-                                            <div class="d-flex align-items-center gap-2 my-2 text-muted small fw-semibold">
-                                                <i class="bi bi-arrow-repeat text-metro-orange fs-6"></i>
-                                                <span>Transfer Time: 2 mins</span>
                                             </div>
                                             <div class="d-flex align-items-center gap-2 text-dark mt-2 pt-2 border-top flex-wrap fw-semibold">
                                                 <span>Next train at</span>
