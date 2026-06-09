@@ -151,7 +151,7 @@ function calculateRoutes() {
         // Sort trips by arrival time
         trips.sort((a, b) => a.arrival - b.arrival);
 
-        let html = '<h5 class="fw-bold mb-4 text-dark d-flex align-items-center gap-2"><i class="bi bi-bezier2 text-metro-orange"></i> Route Options</h5>';
+        let html = '<h5 class="fw-bold mb-3 text-dark d-flex align-items-center gap-2"><i class="bi bi-bezier2 text-metro-orange"></i> Route Options</h5>';
         const isAqua = directSegment.line.toLowerCase().includes('aqua');
         const dotClass = isAqua ? 'timeline-dot aqua' : 'timeline-dot';
 
@@ -164,25 +164,26 @@ function calculateRoutes() {
             let warningHtml = '';
             if (isLimitedStops) {
                 warningHtml = `
-                    <div class="d-flex align-items-center gap-2 p-3 mb-3 rounded-3" style="background-color: rgba(255, 107, 0, 0.08); border: 1px solid rgba(255, 107, 0, 0.15); color: var(--metro-orange); font-size: 0.85rem; font-weight: 600;">
+                    <div class="d-flex align-items-center gap-2 p-3 mb-2 rounded-3" style="background-color: rgba(255, 107, 0, 0.08); border: 1px solid rgba(255, 107, 0, 0.15); color: var(--metro-orange); font-size: 0.85rem; font-weight: 600;">
                         <i class="bi bi-exclamation-triangle-fill"></i>
                         <div>This train runs express and skips some intermediate stations.</div>
                     </div>`;
             }
 
             html += `
-                <div class="card card-custom route-card mb-4 border-0 animated-fade-in">
-                    <div class="card-header bg-transparent border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="fs-6 fw-bold text-dark">Option ${idx + 1}</span>
+                <div class="card card-custom route-card mb-3 border-0 animated-fade-in">
+                    <div class="card-header bg-transparent border-0 pt-3 pb-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fs-6 fw-bold text-dark text-nowrap">Option ${idx + 1}</span>
+                            <span class="text-dark fw-bold fs-6 text-nowrap"><i class="bi bi-clock-history me-1 text-muted"></i>${travelTimeMins} mins</span>
+                        </div>
+                        <div class="d-flex gap-2 mt-2 flex-wrap">
                             <span class="${badgeClass}">${badgeText}</span>
                         </div>
-                        <span class="text-dark fw-bold fs-6"><i class="bi bi-clock-history me-1 text-muted"></i>${travelTimeMins} mins</span>
                     </div>
-                    <div class="card-body pt-3">
+                    <div class="card-body pt-2">
                         ${warningHtml}
                         
-
 
                         <div class="timeline-container">
                             <div class="timeline-step" style="--line-color: ${isAqua ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
@@ -192,10 +193,9 @@ function calculateRoutes() {
                                         <span class="timeline-time">${secondsToTime(trip.departure)}</span>
                                         <span class="timeline-station">${origin}</span>
                                     </div>
-                                    <div class="text-muted small mt-2 d-flex align-items-center gap-2 flex-wrap">
+                                    <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
                                         <span>Board</span>
                                         <span class="badge-line ${isAqua ? 'badge-aqua-line' : 'badge-orange-line'}">${directSegment.line}</span>
-                                        <span>from</span>
                                         <span class="badge-pf">PF ${directSegment.dir.platforms[directSegment.fromIdx]}</span>
                                     </div>
                                 </div>
@@ -208,8 +208,8 @@ function calculateRoutes() {
                                         <span class="timeline-time">${secondsToTime(trip.arrival)}</span>
                                         <span class="timeline-station">${destination}</span>
                                     </div>
-                                    <div class="text-muted small mt-2 d-flex align-items-center gap-2 flex-wrap">
-                                        <span>Arrive at</span>
+                                    <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
+                                        <span>Arrive</span>
                                         <span class="badge-pf">PF ${directSegment.dir.platforms[directSegment.toIdx]}</span>
                                     </div>
                                 </div>
@@ -243,7 +243,7 @@ function calculateRoutes() {
                 </div>`;
             return;
         }
-        let html = '<h5 class="fw-bold mb-4 text-dark d-flex align-items-center gap-2"><i class="bi bi-bezier2 text-metro-orange"></i> Route Options</h5>';
+        let html = '<h5 class="fw-bold mb-3 text-dark d-flex align-items-center gap-2"><i class="bi bi-bezier2 text-metro-orange"></i> Route Options</h5>';
 
         if (timeMode === 'depart') {
             const leg1Trips = getNextTrips(leg1, targetTimeSecs, MAX_ROUTE_OPTIONS);
@@ -303,25 +303,25 @@ function calculateRoutes() {
                         ? "Both connecting trains run express and skip some intermediate stations."
                         : (isLimited1 ? "The first connecting train runs express and skips some intermediate stations." : "The second connecting train runs express and skips some intermediate stations.");
                     warningHtml = `
-                        <div class="d-flex align-items-center gap-2 p-3 mb-3 rounded-3" style="background-color: rgba(255, 107, 0, 0.08); border: 1px solid rgba(255, 107, 0, 0.15); color: var(--metro-orange); font-size: 0.85rem; font-weight: 600;">
+                        <div class="d-flex align-items-center gap-2 p-3 mb-2 rounded-3" style="background-color: rgba(255, 107, 0, 0.08); border: 1px solid rgba(255, 107, 0, 0.15); color: var(--metro-orange); font-size: 0.85rem; font-weight: 600;">
                             <i class="bi bi-exclamation-triangle-fill"></i>
                             <div>${skipMsg}</div>
                         </div>`;
                 }
 
                 html += `
-                    <div class="card card-custom route-card mb-4 border-0 animated-fade-in">
-                        <div class="card-header bg-transparent border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="fs-6 fw-bold text-dark">Option ${idx + 1}</span>
+                    <div class="card card-custom route-card mb-3 border-0 animated-fade-in">
+                        <div class="card-header bg-transparent border-0 pt-3 pb-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fs-6 fw-bold text-dark text-nowrap">Option ${idx + 1}</span>
+                                <span class="text-dark fw-bold fs-6 text-nowrap"><i class="bi bi-clock-history me-1 text-muted"></i>${travelTimeMins} mins</span>
+                            </div>
+                            <div class="d-flex gap-2 mt-2 flex-wrap">
                                 ${badgesHtml}
                             </div>
-                            <span class="text-dark fw-bold fs-6"><i class="bi bi-clock-history me-1 text-muted"></i>${travelTimeMins} mins</span>
                         </div>
-                        <div class="card-body pt-3">
+                        <div class="card-body pt-2">
                             ${warningHtml}
-
-
 
                             <div class="timeline-container">
                                 <div class="timeline-step" style="--line-color: ${isAqua1 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
@@ -331,10 +331,9 @@ function calculateRoutes() {
                                             <span class="timeline-time">${secondsToTime(trip1.departure)}</span>
                                             <span class="timeline-station">${origin}</span>
                                         </div>
-                                        <div class="text-muted small mt-2 d-flex align-items-center gap-2 flex-wrap">
+                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
                                             <span>Board</span>
                                             <span class="badge-line ${isAqua1 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg1.line}</span>
-                                            <span>from</span>
                                             <span class="badge-pf">PF ${leg1.dir.platforms[leg1.fromIdx]}</span>
                                         </div>
                                     </div>
@@ -348,17 +347,17 @@ function calculateRoutes() {
                                             <span class="timeline-station text-dark">Sitabuldi Interchange</span>
                                         </div>
                                         <div class="transfer-details-card">
-                                            <div class="d-flex align-items-center gap-1 text-muted small fw-semibold">
-                                                <span>Arrive at</span>
+                                            <div class="d-flex justify-content-between align-items-center small fw-semibold text-muted">
+                                                <span>Arrive Platform</span>
                                                 <span class="badge-pf">PF ${leg1.dir.platforms[leg1.toIdx]}</span>
                                             </div>
-                                            <div class="d-flex align-items-center gap-2 text-dark mt-2 pt-2 border-top flex-wrap fw-semibold">
-                                                <span>Next train at</span>
-                                                <span class="fw-bold text-dark" style="font-size: 1.05rem;">${secondsToTime(trip2.departure)}</span>
-                                                <span>on</span>
-                                                <span class="badge-line ${isAqua2 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg2.line}</span>
-                                                <span>from</span>
-                                                <span class="badge-pf">PF ${leg2.dir.platforms[leg2.fromIdx]}</span>
+                                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top small fw-semibold">
+                                                <span class="text-muted">Next Train</span>
+                                                <div class="d-flex align-items-center gap-1 flex-wrap justify-content-end">
+                                                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">${secondsToTime(trip2.departure)}</span>
+                                                    <span class="badge-line ${isAqua2 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg2.line}</span>
+                                                    <span class="badge-pf">PF ${leg2.dir.platforms[leg2.fromIdx]}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -371,8 +370,8 @@ function calculateRoutes() {
                                             <span class="timeline-time">${secondsToTime(trip2.arrival)}</span>
                                             <span class="timeline-station">${destination}</span>
                                         </div>
-                                        <div class="text-muted small mt-2 d-flex align-items-center gap-2 flex-wrap">
-                                            <span>Arrive at</span>
+                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
+                                            <span>Arrive</span>
                                             <span class="badge-pf">PF ${leg2.dir.platforms[leg2.toIdx]}</span>
                                         </div>
                                     </div>
@@ -440,25 +439,25 @@ function calculateRoutes() {
                         ? "Both connecting trains run express and skip some intermediate stations."
                         : (isLimited1 ? "The first connecting train runs express and skips some intermediate stations." : "The second connecting train runs express and skips some intermediate stations.");
                     warningHtml = `
-                        <div class="d-flex align-items-center gap-2 p-3 mb-3 rounded-3" style="background-color: rgba(255, 107, 0, 0.08); border: 1px solid rgba(255, 107, 0, 0.15); color: var(--metro-orange); font-size: 0.85rem; font-weight: 600;">
+                        <div class="d-flex align-items-center gap-2 p-3 mb-2 rounded-3" style="background-color: rgba(255, 107, 0, 0.08); border: 1px solid rgba(255, 107, 0, 0.15); color: var(--metro-orange); font-size: 0.85rem; font-weight: 600;">
                             <i class="bi bi-exclamation-triangle-fill"></i>
                             <div>${skipMsg}</div>
                         </div>`;
                 }
 
                 html += `
-                    <div class="card card-custom route-card mb-4 border-0 animated-fade-in">
-                        <div class="card-header bg-transparent border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="fs-6 fw-bold text-dark">Option ${idx + 1}</span>
+                    <div class="card card-custom route-card mb-3 border-0 animated-fade-in">
+                        <div class="card-header bg-transparent border-0 pt-3 pb-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fs-6 fw-bold text-dark text-nowrap">Option ${idx + 1}</span>
+                                <span class="text-dark fw-bold fs-6 text-nowrap"><i class="bi bi-clock-history me-1 text-muted"></i>${travelTimeMins} mins</span>
+                            </div>
+                            <div class="d-flex gap-2 mt-2 flex-wrap">
                                 ${badgesHtml}
                             </div>
-                            <span class="text-dark fw-bold fs-6"><i class="bi bi-clock-history me-1 text-muted"></i>${travelTimeMins} mins</span>
                         </div>
-                        <div class="card-body pt-3">
+                        <div class="card-body pt-2">
                             ${warningHtml}
-
-
 
                             <div class="timeline-container">
                                 <div class="timeline-step" style="--line-color: ${isAqua1 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
@@ -468,10 +467,9 @@ function calculateRoutes() {
                                             <span class="timeline-time">${secondsToTime(trip1.departure)}</span>
                                             <span class="timeline-station">${origin}</span>
                                         </div>
-                                        <div class="text-muted small mt-2 d-flex align-items-center gap-2 flex-wrap">
+                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
                                             <span>Board</span>
                                             <span class="badge-line ${isAqua1 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg1.line}</span>
-                                            <span>from</span>
                                             <span class="badge-pf">PF ${leg1.dir.platforms[leg1.fromIdx]}</span>
                                         </div>
                                     </div>
@@ -485,17 +483,17 @@ function calculateRoutes() {
                                             <span class="timeline-station text-dark">Sitabuldi Interchange</span>
                                         </div>
                                         <div class="transfer-details-card">
-                                            <div class="d-flex align-items-center gap-1 text-muted small fw-semibold">
-                                                <span>Arrive at</span>
+                                            <div class="d-flex justify-content-between align-items-center small fw-semibold text-muted">
+                                                <span>Arrive Platform</span>
                                                 <span class="badge-pf">PF ${leg1.dir.platforms[leg1.toIdx]}</span>
                                             </div>
-                                            <div class="d-flex align-items-center gap-2 text-dark mt-2 pt-2 border-top flex-wrap fw-semibold">
-                                                <span>Next train at</span>
-                                                <span class="fw-bold text-dark" style="font-size: 1.05rem;">${secondsToTime(trip2.departure)}</span>
-                                                <span>on</span>
-                                                <span class="badge-line ${isAqua2 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg2.line}</span>
-                                                <span>from</span>
-                                                <span class="badge-pf">PF ${leg2.dir.platforms[leg2.fromIdx]}</span>
+                                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top small fw-semibold">
+                                                <span class="text-muted">Next Train</span>
+                                                <div class="d-flex align-items-center gap-1 flex-wrap justify-content-end">
+                                                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">${secondsToTime(trip2.departure)}</span>
+                                                    <span class="badge-line ${isAqua2 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg2.line}</span>
+                                                    <span class="badge-pf">PF ${leg2.dir.platforms[leg2.fromIdx]}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -508,8 +506,8 @@ function calculateRoutes() {
                                             <span class="timeline-time">${secondsToTime(trip2.arrival)}</span>
                                             <span class="timeline-station">${destination}</span>
                                         </div>
-                                        <div class="text-muted small mt-2 d-flex align-items-center gap-2 flex-wrap">
-                                            <span>Arrive at</span>
+                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
+                                            <span>Arrive</span>
                                             <span class="badge-pf">PF ${leg2.dir.platforms[leg2.toIdx]}</span>
                                         </div>
                                     </div>
