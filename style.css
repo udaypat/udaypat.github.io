@@ -173,6 +173,12 @@ body {
     z-index: 0;
 }
 
+.timeline-step.transfer-walk::after {
+    background: transparent;
+    border-left: 4px dotted var(--line-color, #CBD5E1);
+    width: 0;
+}
+
 .timeline-step:last-child::after {
     display: none;
 }
@@ -225,12 +231,13 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 10px;
+    padding: 2px 8px;
     border-radius: 99px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.02em;
+    line-height: 1;
 }
 
 .badge-orange-line {

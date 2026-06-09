@@ -324,6 +324,7 @@ function calculateRoutes() {
                             ${warningHtml}
 
                             <div class="timeline-container">
+                                <!-- Step 1: Origin Boarding -->
                                 <div class="timeline-step" style="--line-color: ${isAqua1 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
                                     <div class="${dotClass1}"></div>
                                     <div class="timeline-content">
@@ -339,30 +340,38 @@ function calculateRoutes() {
                                     </div>
                                 </div>
 
-                                <div class="timeline-step" style="--line-color: ${isAqua2 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
-                                    <div class="timeline-dot transfer"></div>
+                                <!-- Step 2: Interchange Arrival -->
+                                <div class="timeline-step transfer-walk" style="--line-color: #CBD5E1">
+                                    <div class="${dotClass1}"></div>
                                     <div class="timeline-content">
                                         <div class="d-flex align-items-baseline gap-2">
                                             <span class="timeline-time text-muted">${secondsToTime(trip1.arrival)}</span>
-                                            <span class="timeline-station text-dark">Sitabuldi Interchange</span>
+                                            <span class="timeline-station text-muted">Sitabuldi Interchange</span>
                                         </div>
-                                        <div class="transfer-details-card">
-                                            <div class="d-flex justify-content-between align-items-center small fw-semibold text-muted">
-                                                <span>Arrive Platform</span>
-                                                <span class="badge-pf">PF ${leg1.dir.platforms[leg1.toIdx]}</span>
-                                            </div>
-                                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top small fw-semibold">
-                                                <span class="text-muted">Next Train</span>
-                                                <div class="d-flex align-items-center gap-1 flex-wrap justify-content-end">
-                                                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">${secondsToTime(trip2.departure)}</span>
-                                                    <span class="badge-line ${isAqua2 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg2.line}</span>
-                                                    <span class="badge-pf">PF ${leg2.dir.platforms[leg2.fromIdx]}</span>
-                                                </div>
-                                            </div>
+                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
+                                            <span>Arrive</span>
+                                            <span class="badge-pf">PF ${leg1.dir.platforms[leg1.toIdx]}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 3: Interchange Boarding -->
+                                <div class="timeline-step" style="--line-color: ${isAqua2 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
+                                    <div class="${dotClass2}"></div>
+                                    <div class="timeline-content">
+                                        <div class="d-flex align-items-baseline gap-2">
+                                            <span class="timeline-time">${secondsToTime(trip2.departure)}</span>
+                                            <span class="timeline-station">Sitabuldi Interchange</span>
+                                        </div>
+                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
+                                            <span>Board</span>
+                                            <span class="badge-line ${isAqua2 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg2.line}</span>
+                                            <span class="badge-pf">PF ${leg2.dir.platforms[leg2.fromIdx]}</span>
                                         </div>
                                     </div>
                                 </div>
                                 
+                                <!-- Step 4: Destination Arrival -->
                                 <div class="timeline-step">
                                     <div class="${dotClass2}"></div>
                                     <div class="timeline-content">
@@ -460,6 +469,7 @@ function calculateRoutes() {
                             ${warningHtml}
 
                             <div class="timeline-container">
+                                <!-- Step 1: Origin Boarding -->
                                 <div class="timeline-step" style="--line-color: ${isAqua1 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
                                     <div class="${dotClass1}"></div>
                                     <div class="timeline-content">
@@ -475,30 +485,38 @@ function calculateRoutes() {
                                     </div>
                                 </div>
 
-                                <div class="timeline-step" style="--line-color: ${isAqua2 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
-                                    <div class="timeline-dot transfer"></div>
+                                <!-- Step 2: Interchange Arrival -->
+                                <div class="timeline-step transfer-walk" style="--line-color: #CBD5E1">
+                                    <div class="${dotClass1}"></div>
                                     <div class="timeline-content">
                                         <div class="d-flex align-items-baseline gap-2">
                                             <span class="timeline-time text-muted">${secondsToTime(trip1.arrival)}</span>
-                                            <span class="timeline-station text-dark">Sitabuldi Interchange</span>
+                                            <span class="timeline-station text-muted">Sitabuldi Interchange</span>
                                         </div>
-                                        <div class="transfer-details-card">
-                                            <div class="d-flex justify-content-between align-items-center small fw-semibold text-muted">
-                                                <span>Arrive Platform</span>
-                                                <span class="badge-pf">PF ${leg1.dir.platforms[leg1.toIdx]}</span>
-                                            </div>
-                                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top small fw-semibold">
-                                                <span class="text-muted">Next Train</span>
-                                                <div class="d-flex align-items-center gap-1 flex-wrap justify-content-end">
-                                                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">${secondsToTime(trip2.departure)}</span>
-                                                    <span class="badge-line ${isAqua2 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg2.line}</span>
-                                                    <span class="badge-pf">PF ${leg2.dir.platforms[leg2.fromIdx]}</span>
-                                                </div>
-                                            </div>
+                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
+                                            <span>Arrive</span>
+                                            <span class="badge-pf">PF ${leg1.dir.platforms[leg1.toIdx]}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 3: Interchange Boarding -->
+                                <div class="timeline-step" style="--line-color: ${isAqua2 ? 'var(--metro-aqua)' : 'var(--metro-orange)'}">
+                                    <div class="${dotClass2}"></div>
+                                    <div class="timeline-content">
+                                        <div class="d-flex align-items-baseline gap-2">
+                                            <span class="timeline-time">${secondsToTime(trip2.departure)}</span>
+                                            <span class="timeline-station">Sitabuldi Interchange</span>
+                                        </div>
+                                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap fw-semibold">
+                                            <span>Board</span>
+                                            <span class="badge-line ${isAqua2 ? 'badge-aqua-line' : 'badge-orange-line'}">${leg2.line}</span>
+                                            <span class="badge-pf">PF ${leg2.dir.platforms[leg2.fromIdx]}</span>
                                         </div>
                                     </div>
                                 </div>
                                 
+                                <!-- Step 4: Destination Arrival -->
                                 <div class="timeline-step">
                                     <div class="${dotClass2}"></div>
                                     <div class="timeline-content">
